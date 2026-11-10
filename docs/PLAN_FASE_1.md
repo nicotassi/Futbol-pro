@@ -1,6 +1,6 @@
-# FASE 1 — Diseño y estructura (plan)
+# FASE 1 — Diseño y estructura
 
-> Estado: **pendiente de aprobación**. No se empieza a programar hasta validar `docs/ARQUITECTURA.md`.
+> Estado: **implementada** — pendiente de validación del usuario. Ver el resultado al final de este documento.
 
 **Objetivo:** primera interfaz funcional, navegable e instalable, con la identidad visual definitiva y los componentes reutilizables que usarán todas las fases siguientes.
 
@@ -11,6 +11,7 @@
 ## Tareas
 
 ### 1.1 Proyecto base
+
 - Crear proyecto Vite + React + TypeScript (`strict`).
 - ESLint, Prettier, alias `@/` → `src/`.
 - Vitest + Testing Library; Playwright con perfil Android (Pixel 7).
@@ -19,6 +20,7 @@
 - Estructura de carpetas según la arquitectura.
 
 ### 1.2 Identidad visual
+
 - `styles/tokens.css`: colores, tipografía, espaciado, radios, sombras, duraciones.
 - Tailwind v4 conectado a los tokens.
 - Fuentes Outfit + Inter autoalojadas.
@@ -26,15 +28,17 @@
 - Página interna `/_design` (solo en desarrollo) con todos los componentes para revisar el estilo.
 
 ### 1.3 Componentes reutilizables
-| Grupo | Componentes |
-|---|---|
-| `ui/` | Button (primario dorado, secundario, fantasma), IconButton, Card, StatTile, Badge, Chip, ProgressBar, ProgressRing, Avatar, Input, Select, Textarea, Sheet (hoja inferior), Dialog, Tabs, Skeleton |
-| `layout/` | AppShell, BottomNav (5 pestañas, estado activo dorado), SideNav (≥ 1024 px), TopBar, PageHeader, Section |
-| `feedback/` | EmptyState, ErrorState, LoadingState, ErrorBoundary, OfflineBanner, Toast |
+
+| Grupo       | Componentes                                                                                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui/`       | Button (primario dorado, secundario, fantasma), IconButton, Card, StatTile, Badge, Chip, ProgressBar, ProgressRing, Avatar, Input, Select, Textarea, Sheet (hoja inferior), Dialog, Tabs, Skeleton |
+| `layout/`   | AppShell, BottomNav (5 pestañas, estado activo dorado), SideNav (≥ 1024 px), TopBar, PageHeader, Section                                                                                           |
+| `feedback/` | EmptyState, ErrorState, LoadingState, ErrorBoundary, OfflineBanner, Toast                                                                                                                          |
 
 Todos accesibles (foco visible, `aria-*`, objetivos táctiles ≥ 44 px) y con soporte de `prefers-reduced-motion`.
 
 ### 1.4 Navegación y páginas
+
 - Router con layout principal + navegación inferior.
 - Pantallas con estructura y estados vacíos: Inicio, Entrenar, Biblioteca, Objetivos, Evolución, Perfil, Partidos, Recuperación, Calendario, Registro del reloj, Administración.
 - Modo entrenamiento como pantalla completa (sin barra inferior), solo maqueta de la interfaz: cronómetro, anterior/siguiente, pausar, finalizar.
@@ -42,19 +46,21 @@ Todos accesibles (foco visible, `aria-*`, objetivos táctiles ≥ 44 px) y con s
 - Transiciones suaves entre pantallas.
 
 ### 1.5 Dashboard (diseño)
+
 - Saludo + tarjeta de perfil del jugador.
 - Resumen semanal (minutos, sesiones) — en estado vacío.
 - Último entrenamiento / próxima actividad — estado vacío con acción.
 - Objetivos activos, último bienestar — estado vacío.
 - Accesos rápidos destacados: Registrar entrenamiento, Registrar partido, Registrar bienestar, Ver evolución, Subir captura del reloj.
-- Modo demo opcional solo en desarrollo, con franja visible "DATOS DE DEMOSTRACIÓN".
 
 ### 1.6 PWA base
+
 - `vite-plugin-pwa`: manifest (nombre, colores, `display: standalone`, orientación vertical), íconos 192/512/maskable.
 - Service worker con caché del app shell (abre sin conexión).
 - Banner de "Sin conexión".
 
 ### 1.7 Pruebas y documentación
+
 - Tests de componentes clave (BottomNav, EmptyState, Button).
 - E2E: abrir la app, recorrer las 5 pestañas y los accesos rápidos en viewport Android; sin errores en consola.
 - Lighthouse PWA/accesibilidad sobre el build.
@@ -81,3 +87,50 @@ Todos accesibles (foco visible, `aria-*`, objetivos táctiles ≥ 44 px) y con s
 ## Entregable al cerrar la fase
 
 Resumen de lo construido, capturas, cómo probarlo y lista de pendientes para la Fase 2 (Supabase, usuarios y RLS).
+
+---
+
+## Resultado
+
+### Qué se construyó
+
+- Proyecto con Vite 8, React 19, TypeScript estricto, Tailwind 4 y React Router 7. ESLint, Prettier, Vitest y Playwright configurados.
+- Identidad visual: tokens de color con contraste AA verificado, tipografías Outfit e Inter autoalojadas, monograma "FP" y logotipo.
+- Unos 25 componentes reutilizables en `ui/`, `layout/`, `feedback/` y `brand/`, además del catálogo `/_design` (solo en desarrollo).
+- Navegación inferior de 5 pestañas en el celular. En pantallas de 1024 px o más se convierte en barra lateral.
+- 12 pantallas: Inicio, Entrenar, Biblioteca, Objetivos, Evolución, Perfil, Partidos, Recuperación, Calendario, Registro del reloj, Administración y 404.
+- Funciones que ya andan sin base de datos:
+  - Calendario con vistas de día, semana y mes y navegación entre fechas.
+  - Biblioteca con filtro por categoría y búsqueda de temas.
+  - Vista previa del modo entrenamiento con cronómetro, anterior/siguiente, pausa y confirmación al finalizar. No guarda datos.
+- PWA:
+  - Manifest e íconos 192, 512 y maskable.
+  - Service worker que precachea el app shell, así la app abre sin conexión.
+  - Aviso visible de "Sin conexión".
+- Las pantallas secundarias se cargan bajo demanda (code splitting), para que el inicio cargue rápido en el celular.
+
+### Verificación
+
+| Prueba              | Resultado                                                                  |
+| ------------------- | -------------------------------------------------------------------------- |
+| `npm run typecheck` | ✅ sin errores                                                             |
+| `npm run lint`      | ✅ sin errores ni advertencias                                             |
+| `npm test`          | ✅ 12 tests unitarios y de componentes                                     |
+| `npm run test:e2e`  | ✅ 20 tests: 10 escenarios × 2 dispositivos (Pixel 7 y escritorio 1280 px) |
+
+Los tests e2e verifican:
+
+- las 5 pestañas, sin errores en consola y sin scroll horizontal;
+- los 5 accesos rápidos y el botón atrás;
+- el calendario y el filtro de la biblioteca;
+- el modo entrenamiento;
+- la página 404;
+- el manifest de la PWA y la apertura sin conexión.
+
+### Pendiente para la Fase 2
+
+- Crear el proyecto de Supabase y las migraciones: tablas, índices y RLS.
+- Inicio de sesión de papá con email y de Benja con usuario y contraseña, con roles `admin` y `player`.
+- `AuthContext`, rutas protegidas y Administración solo para el admin.
+- Perfil del jugador leído desde `player_profiles`, en lugar del perfil inicial fijo.
+- TanStack Query, con caché persistida y una cola de sincronización sin conexión.

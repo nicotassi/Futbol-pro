@@ -1,0 +1,150 @@
+/*
+ * FUTBOLISTA PRO — estilos globales y tokens de diseño.
+ *
+ * Los tokens de @theme generan utilidades de Tailwind (bg-paper, text-ink, text-gold, …)
+ * y además quedan disponibles como variables CSS (var(--color-gold)).
+ * Contrastes verificados (WCAG AA) para texto:
+ *   ink/paper 17:1 · muted/paper 4.8:1 · gold-strong/paper 4.7:1 · gold/ink 7.6:1 · fog/ink 6.6:1
+ */
+@import 'tailwindcss';
+
+@theme {
+  /* Paleta */
+  --color-paper: #faf8f4; /* blanco cálido — fondo principal */
+  --color-surface: #ffffff; /* tarjetas */
+  --color-sand: #f2eee6; /* fondos suaves, hover */
+  --color-line: #e6e2da; /* bordes y divisiones */
+  --color-ink: #16171a; /* negro carbón — texto y secciones destacadas */
+  --color-ink-2: #22242a; /* carbón elevado */
+  --color-ink-3: #2f3239; /* bordes sobre carbón */
+  --color-muted: #6b6e76; /* texto secundario sobre claro */
+  --color-fog: #9a9da5; /* texto secundario sobre carbón */
+  --color-gold: #c9a44c; /* dorado metálico — acento */
+  --color-gold-light: #d9bc72;
+  --color-gold-strong: #8a6b22; /* dorado para texto sobre fondo claro */
+  --color-gold-soft: #f4ecd8; /* fondo de acento muy suave */
+
+  /* Semáforo / estados (solo donde aportan significado) */
+  --color-success: #1f7a52;
+  --color-success-soft: #e3f2ea;
+  --color-warning: #8a5e00;
+  --color-warning-bright: #e0a526;
+  --color-warning-soft: #fbf0d6;
+  --color-danger: #b4362d;
+  --color-danger-soft: #f8e3e1;
+
+  /* Tipografía */
+  --font-display: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Radios y sombras */
+  --radius-card: 1rem;
+  --radius-control: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(22 23 26 / 0.04), 0 4px 16px -8px rgb(22 23 26 / 0.08);
+  --shadow-float: 0 8px 32px -12px rgb(22 23 26 / 0.35);
+
+  /* Movimiento */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-enter: enter 260ms var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shimmer {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+@layer base {
+  :root {
+    --bottom-nav-height: 4.25rem;
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-paper);
+    overscroll-behavior-y: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-gold-soft);
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+/* Utilidades propias (con @utility admiten variantes: max-lg:pt-safe-3, etc.). */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+@utility pb-safe-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 1.5rem);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pt-safe-3 {
+  padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
