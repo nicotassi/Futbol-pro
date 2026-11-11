@@ -23,6 +23,7 @@ import { playerSubtitle } from '@/features/players/format';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { capitalize, formatLongDate, greetingFor } from '@/utils/date';
 import { QuickActions } from './QuickActions';
+import { PlayerAccountPrompt } from '@/features/players/PlayerAccountPrompt';
 
 export default function DashboardPage() {
   useDocumentTitle('Inicio');
@@ -88,6 +89,8 @@ export default function DashboardPage() {
           </p>
         </div>
       </Card>
+
+      <PlayerAccountPrompt />
 
       <Section title="Accesos rápidos">
         <QuickActions isAdmin={isAdmin} />

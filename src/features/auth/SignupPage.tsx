@@ -1,30 +1,23 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
-import { useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Sparkles } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router';
+import { ChevronLeft, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/authContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { LogoMark } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
-import { familyApi, familyKeys, FamilyApiError } from '@/services/familyApi';
+import { familyApi, FamilyApiError } from '@/services/familyApi';
 
-/** Configuración inicial: crea la cuenta de papá y el jugador con el código de instalación. */
-export default function SetupPage() {
-  useDocumentTitle('Configuración inicial');
+/**
+ * Crear cuenta: cualquier familia puede registrarse sola. Cada cuenta nueva
+ * tiene su propio jugador y sus datos son privados (RLS por jugador).
+ */
+export default function SignupPage() {
+  useDocumentTitle('Crear cuenta');
   const { status, signIn } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  // El enlace de instalación puede traer el código: /configuracion?codigo=XXXX-XXXX
-  const [params] = useSearchParams();
-  const [form, setForm] = useState({
-    code: params.get('codigo') ?? '',
-    adminName: '',
-    email: '',
-    password: '',
-    password2: '',
-    playerName: 'Benja',
-  });
+  const [form, setForm] = useState({ adminName: '', email: '', password: '', playerName: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -36,30 +29,17 @@ export default function SetupPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (form.password !== form.password2) {
-      setError('Las contraseñas no coinciden.');
-      return;
-    }
     setSubmitting(true);
     try {
-      await familyApi.bootstrap({
-        code: form.code,
-        email: form.email,
-        password: form.password,
-        adminName: form.adminName,
-        playerName: form.playerName,
-      });
-      void queryClient.invalidateQueries({ queryKey: familyKeys.status });
+      await familyApi.signup(form);
       const result = await signIn(form.email, form.password);
       if (result.error) {
         setError(`La cuenta se creó, pero no se pudo ingresar: ${result.error}`);
         return;
       }
-      navigate('/admin', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
-      setError(
-        err instanceof FamilyApiError ? err.message : 'No se pudo completar la configuración.',
-      );
+      setError(err instanceof FamilyApiError ? err.message : 'No se pudo crear la cuenta.');
     } finally {
       setSubmitting(false);
     }
@@ -72,18 +52,17 @@ export default function SetupPage() {
           to="/ingresar"
           className="mb-6 inline-flex items-center gap-1 text-sm text-fog hover:text-paper"
         >
-          <ChevronLeft className="size-4" aria-hidden /> Volver al ingreso
+          <ChevronLeft className="size-4" aria-hidden /> Ya tengo cuenta
         </Link>
         <div className="flex items-center gap-3">
           <LogoMark size={48} />
           <div>
-            <p className="eyebrow text-gold">Primera vez</p>
-            <h1 className="text-2xl font-semibold">Configurar la app</h1>
+            <p className="eyebrow text-gold">Bienvenido</p>
+            <h1 className="text-2xl font-semibold">Crear cuenta</h1>
           </div>
         </div>
         <p className="mt-3 text-sm text-fog">
-          Creá tu cuenta de administrador. Después vas a poder crear la cuenta del jugador desde
-          Administración.
+          Para el papá, mamá o adulto a cargo. Después vas a poder crearle una cuenta al jugador.
         </p>
 
         <form
@@ -92,19 +71,9 @@ export default function SetupPage() {
           className="mt-6 flex flex-col gap-4 rounded-[22px] bg-surface p-5 text-ink"
         >
           <Input
-            label="Código de instalación"
-            value={form.code}
-            onChange={set('code')}
-            placeholder="XXXX-XXXX"
-            autoCapitalize="characters"
-            autoComplete="off"
-            hint="Te lo pasa Claude. Sirve una sola vez."
-          />
-          <Input
             label="Tu nombre"
             value={form.adminName}
             onChange={set('adminName')}
-            placeholder="Ej.: Nico"
             autoComplete="given-name"
           />
           <Input
@@ -114,26 +83,33 @@ export default function SetupPage() {
             onChange={set('email')}
             autoComplete="email"
             inputMode="email"
+            autoCapitalize="none"
           />
-          <Input
-            label="Contraseña"
-            type="password"
-            value={form.password}
-            onChange={set('password')}
-            autoComplete="new-password"
-            hint="Mínimo 8 caracteres."
-          />
-          <Input
-            label="Repetí la contraseña"
-            type="password"
-            value={form.password2}
-            onChange={set('password2')}
-            autoComplete="new-password"
-          />
+          <div className="relative">
+            <Input
+              label="Contraseña"
+              type={showPassword ? 'text' : 'password'}
+              value={form.password}
+              onChange={set('password')}
+              autoComplete="new-password"
+              hint="Mínimo 8 caracteres."
+              className="pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-pressed={showPassword}
+              className="absolute top-[1.625rem] right-1 grid size-11 place-items-center rounded-full text-muted hover:text-ink"
+            >
+              {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+            </button>
+          </div>
           <Input
             label="Nombre del jugador"
             value={form.playerName}
             onChange={set('playerName')}
+            placeholder="Ej.: Benja"
             autoComplete="off"
           />
           {error && (
@@ -149,11 +125,14 @@ export default function SetupPage() {
             size="lg"
             block
             disabled={submitting}
-            leadingIcon={<Sparkles className="size-5" />}
+            leadingIcon={<UserPlus className="size-5" />}
           >
-            {submitting ? 'Configurando…' : 'Crear mi cuenta'}
+            {submitting ? 'Creando…' : 'Crear cuenta'}
           </Button>
         </form>
+        <p className="mt-6 text-center text-xs text-fog">
+          Los datos de cada familia son privados: nadie más puede verlos.
+        </p>
       </main>
     </div>
   );

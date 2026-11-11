@@ -1,46 +1,44 @@
 import { expect, test } from '@playwright/test';
-import { mockSupabase, SETUP_CODE } from './support/mockSupabase';
+import { mockSupabase } from './support/mockSupabase';
 
-test('configuración inicial: papá crea su cuenta con el código y después la de Benja', async ({
-  page,
-}) => {
+test('una familia nueva crea su cuenta sola y después la del jugador', async ({ page }) => {
   await mockSupabase(page, { configured: false });
   await page.goto('/');
   await expect(page).toHaveURL(/\/ingresar$/);
 
-  await page.getByRole('link', { name: '¿Primera vez? Configurar la app' }).click();
-  await expect(page.getByRole('heading', { name: 'Configurar la app' })).toBeVisible();
+  await page.getByRole('link', { name: '¿Primera vez? Crear cuenta' }).click();
+  await expect(page.getByRole('heading', { name: 'Crear cuenta' })).toBeVisible();
 
-  // Código incorrecto
-  await page.getByLabel('Código de instalación').fill('ZZZZ-ZZZZ');
+  // Contraseña corta: el servidor la rechaza con un mensaje claro.
   await page.getByLabel('Tu nombre').fill('Nico');
   await page.getByLabel('Tu email').fill('nico@example.com');
+  await page.getByLabel('Contraseña', { exact: true }).fill('corta');
+  await page.getByLabel('Nombre del jugador').fill('Benja');
+  await page.getByRole('button', { name: 'Crear cuenta' }).click();
+  await expect(page.getByRole('alert')).toContainText('al menos 8');
+
   await page.getByLabel('Contraseña', { exact: true }).fill('clave-segura-1');
-  await page.getByLabel('Repetí la contraseña').fill('clave-segura-1');
-  await page.getByRole('button', { name: 'Crear mi cuenta' }).click();
-  await expect(page.getByRole('alert')).toContainText('no es válido');
+  await page.getByRole('button', { name: 'Crear cuenta' }).click();
 
-  // Contraseñas distintas
-  await page.getByLabel('Código de instalación').fill(SETUP_CODE);
-  await page.getByLabel('Repetí la contraseña').fill('otra-cosa');
-  await page.getByRole('button', { name: 'Crear mi cuenta' }).click();
-  await expect(page.getByRole('alert')).toHaveText('Las contraseñas no coinciden.');
-
-  await page.getByLabel('Repetí la contraseña').fill('clave-segura-1');
-  await page.getByRole('button', { name: 'Crear mi cuenta' }).click();
-
-  // Queda logueado como papá, en Administración, con la invitación a crear la cuenta del jugador.
+  // Queda adentro, en Inicio, con el aviso para crear la cuenta del jugador.
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Nico');
+  await page.getByRole('link', { name: /Creá la cuenta de Benja/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Administración' })).toBeVisible();
-  await expect(page.getByText('Nico (vos)')).toBeVisible();
-  await expect(page.getByText('Crear la cuenta de Benja')).toBeVisible();
 
   await page.getByLabel('Usuario', { exact: true }).fill('benja');
   await page.getByLabel('Contraseña', { exact: true }).fill('messi2026');
   await page.getByLabel('Repetí la contraseña').fill('messi2026');
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
-
   await expect(page.getByText('Cambiar contraseña de Benja')).toBeVisible();
-  await expect(page.getByText('Usuario: benja').first()).toBeVisible();
+
+  // El aviso de Inicio desaparece una vez creada la cuenta.
+  await page
+    .getByRole('navigation', { name: 'Navegación principal' })
+    .locator('visible=true')
+    .getByRole('link', { name: 'Inicio' })
+    .click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Nico');
+  await expect(page.getByRole('link', { name: /Creá la cuenta de Benja/ })).toHaveCount(0);
 
   // Benja ya puede ingresar con su usuario.
   await page.goto('/perfil');
@@ -51,11 +49,15 @@ test('configuración inicial: papá crea su cuenta con el código y después la 
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Benja');
 });
 
-test('con la app ya configurada no se ofrece la configuración inicial', async ({ page }) => {
+test('un email ya registrado avisa que hay que ingresar', async ({ page }) => {
   await mockSupabase(page);
-  await page.goto('/ingresar');
-  await expect(page.getByText('Las cuentas las crea papá.')).toBeVisible();
-  await expect(page.getByRole('link', { name: '¿Primera vez? Configurar la app' })).toHaveCount(0);
+  await page.goto('/crear-cuenta');
+  await page.getByLabel('Tu nombre').fill('Otro');
+  await page.getByLabel('Tu email').fill('papa@example.com');
+  await page.getByLabel('Contraseña', { exact: true }).fill('clave-segura-1');
+  await page.getByLabel('Nombre del jugador').fill('Juan');
+  await page.getByRole('button', { name: 'Crear cuenta' }).click();
+  await expect(page.getByRole('alert')).toContainText('Ya existe una cuenta con ese email');
 });
 
 test('papá cambia la contraseña de Benja', async ({ page }) => {

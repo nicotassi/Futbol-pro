@@ -7,15 +7,7 @@ import { friendlyError } from './errors';
  * el registro público). La clave secreta vive solo en el servidor.
  */
 type Action =
-  | { action: 'status' }
-  | {
-      action: 'bootstrap';
-      code: string;
-      email: string;
-      password: string;
-      adminName: string;
-      playerName: string;
-    }
+  | { action: 'signup'; email: string; password: string; adminName: string; playerName: string }
   | { action: 'create-player-account'; username: string; password: string }
   | { action: 'reset-player-password'; password: string };
 
@@ -34,13 +26,10 @@ async function call<T extends Record<string, unknown>>(body: Action): Promise<T>
 }
 
 export const familyApi = {
-  status: () => call<{ ok: true; configured: boolean }>({ action: 'status' }),
-  bootstrap: (input: Omit<Extract<Action, { action: 'bootstrap' }>, 'action'>) =>
-    call<{ ok: true }>({ action: 'bootstrap', ...input }),
+  signup: (input: Omit<Extract<Action, { action: 'signup' }>, 'action'>) =>
+    call<{ ok: true }>({ action: 'signup', ...input }),
   createPlayerAccount: (username: string, password: string) =>
     call<{ ok: true; username: string }>({ action: 'create-player-account', username, password }),
   resetPlayerPassword: (password: string) =>
     call<{ ok: true }>({ action: 'reset-player-password', password }),
 };
-
-export const familyKeys = { status: ['family-status'] as const };

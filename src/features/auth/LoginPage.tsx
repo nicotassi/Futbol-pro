@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/authContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -8,7 +7,6 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { LogoMark } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
-import { familyApi, familyKeys } from '@/services/familyApi';
 import { SplashScreen } from './SplashScreen';
 
 export default function LoginPage() {
@@ -22,16 +20,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Si la app todavía no fue configurada, se ofrece la configuración inicial.
-  const setupStatus = useQuery({
-    queryKey: familyKeys.status,
-    queryFn: familyApi.status,
-    enabled: status === 'signed-out',
-    staleTime: 0,
-    retry: false,
-  });
-  const needsSetup = setupStatus.data?.configured === false;
 
   const from = (location.state as { from?: string } | null)?.from ?? '/';
 
@@ -138,18 +126,15 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {needsSetup ? (
-          <Link
-            to="/configuracion"
-            className="mt-6 rounded-[14px] border border-gold/50 px-4 py-3 text-center text-sm font-semibold text-gold hover:bg-ink-2"
-          >
-            ¿Primera vez? Configurar la app
-          </Link>
-        ) : (
-          <p className="mt-6 text-center text-xs text-fog">
-            Las cuentas las crea papá. ¿Te olvidaste la contraseña? Pedile que la cambie.
-          </p>
-        )}
+        <Link
+          to="/crear-cuenta"
+          className="mt-6 rounded-[14px] border border-gold/50 px-4 py-3 text-center text-sm font-semibold text-gold hover:bg-ink-2"
+        >
+          ¿Primera vez? Crear cuenta
+        </Link>
+        <p className="mt-4 text-center text-xs text-fog">
+          Los jugadores entran con el usuario que les crea su papá o mamá.
+        </p>
       </main>
     </div>
   );

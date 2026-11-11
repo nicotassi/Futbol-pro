@@ -27,36 +27,29 @@ function checkName(name: string, label: string, max: number): string | null {
   return null;
 }
 
-export interface BootstrapInput {
-  code: string;
+export interface SignupInput {
   email: string;
   password: string;
   adminName: string;
   playerName: string;
 }
 
-export function validateBootstrap(body: Record<string, unknown>): Result<BootstrapInput> {
-  const code = str(body.code).toUpperCase();
+/** Alta de una familia nueva: cuenta del adulto + jugador. */
+export function validateSignup(body: Record<string, unknown>): Result<SignupInput> {
   const email = str(body.email).toLowerCase();
   const adminName = str(body.adminName);
   const playerName = str(body.playerName);
-  if (!/^[A-Z0-9]{4}-?[A-Z0-9]{4}$/.test(code))
-    return { ok: false, error: 'El código de instalación no es válido.' };
+  const n1 = checkName(adminName, 'tu nombre', 60);
+  if (n1) return { ok: false, error: n1 };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return { ok: false, error: 'El email no es válido.' };
   if (email.endsWith(`@${PLAYER_EMAIL_DOMAIN}`))
     return { ok: false, error: 'Usá tu email personal.' };
   const pw = checkPassword(body.password);
   if (pw) return { ok: false, error: pw };
-  const n1 = checkName(adminName, 'tu nombre', 60);
-  if (n1) return { ok: false, error: n1 };
   const n2 = checkName(playerName, 'el nombre del jugador', 40);
   if (n2) return { ok: false, error: n2 };
-  const normalizedCode = code.includes('-') ? code : `${code.slice(0, 4)}-${code.slice(4)}`;
-  return {
-    ok: true,
-    data: { code: normalizedCode, email, password: body.password as string, adminName, playerName },
-  };
+  return { ok: true, data: { email, password: body.password as string, adminName, playerName } };
 }
 
 export interface PlayerAccountInput {

@@ -67,7 +67,7 @@ El catálogo visual de componentes está en `/_design`. Solo existe en modo desa
 
 - **App publicada:** https://nicotassi.github.io/Futbol-pro/ (GitHub Pages, rama `gh-pages`; se publica con `scripts/deploy-pages.sh`).
 - **Base de datos:** Supabase, proyecto "Futbol-pro". Las migraciones de `supabase/migrations/` y la Edge Function `family-accounts` se aplican con el conector de Supabase.
-- **Cuentas:** se crean desde la app. Papá usa un código de instalación de un solo uso y después crea la cuenta del jugador en Administración. El registro público está cerrado en la base: sin una invitación de la Edge Function, la cuenta se rechaza.
+- **Cuentas:** cualquier familia se registra desde la app ("Crear cuenta") y crea la cuenta de su jugador en Administración. Cada familia ve solo sus datos (RLS por jugador). Todas las altas pasan por la Edge Function `family-accounts`: el registro directo contra Supabase Auth está cerrado en la base (`account_invites`).
 - Guía para la familia: [docs/GUIA_PUESTA_EN_MARCHA.md](docs/GUIA_PUESTA_EN_MARCHA.md).
 
 ## Configuración y secretos

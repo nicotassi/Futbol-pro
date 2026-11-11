@@ -78,10 +78,8 @@ function authUser(user: Account) {
   };
 }
 
-export const SETUP_CODE = 'ABCD-EFGH';
-
 interface MockOptions {
-  /** false = app recién instalada: no hay cuentas (se usa la configuración inicial). */
+  /** false = todavía no hay cuentas (familia nueva que se registra). */
   configured?: boolean;
   /** false = papá todavía no creó la cuenta del jugador. */
   playerAccount?: boolean;
@@ -94,7 +92,6 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
     patches: [] as unknown[],
     serverDown: false,
     requestsWhileDown: 0,
-    codeUsed: false,
   };
   // Copias mutables de las cuentas existentes en esta simulación.
   const all: Account[] = configured
@@ -185,21 +182,19 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
       const body = req.postDataJSON() as Record<string, string>;
       const caller = requester(route);
       switch (body.action) {
-        case 'status':
-          return json(route, 200, { ok: true, configured: all.some((a) => a.role === 'admin') });
-        case 'bootstrap': {
-          if (all.some((a) => a.role === 'admin'))
+        case 'signup': {
+          if (all.some((a) => a.email === body.email?.toLowerCase())) {
             return json(route, 409, {
               ok: false,
-              error: 'La app ya está configurada. Ingresá con tu cuenta.',
-            });
-          if (state.codeUsed || body.code?.toUpperCase() !== SETUP_CODE) {
-            return json(route, 403, {
-              ok: false,
-              error: 'El código de instalación no es válido, ya se usó o venció.',
+              error: 'Ya existe una cuenta con ese email. Ingresá con tu contraseña.',
             });
           }
-          state.codeUsed = true;
+          if ((body.password ?? '').length < 8) {
+            return json(route, 400, {
+              ok: false,
+              error: 'La contraseña debe tener al menos 8 caracteres.',
+            });
+          }
           state.player.first_name = body.playerName ?? 'Benja';
           all.push({
             ...accounts.admin,

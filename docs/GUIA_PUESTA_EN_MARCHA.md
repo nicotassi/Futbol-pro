@@ -1,19 +1,21 @@
-# Puesta en marcha
+# Cómo empezar a usar Futbolista Pro
 
-La app ya está publicada y conectada. **No hay que configurar nada.**
+**App:** https://nicotassi.github.io/Futbol-pro/
 
-- **App:** https://nicotassi.github.io/Futbol-pro/
-- **Base de datos:** proyecto de Supabase "Futbol-pro". Claude lo configura con el conector de Supabase.
+## Papá, mamá o adulto a cargo
 
-## Primera vez (solo papá)
+1. Abrí el enlace → **¿Primera vez? Crear cuenta**.
+2. Completá tu nombre, tu email, una contraseña y el nombre del jugador → **Crear cuenta**.
+3. En Inicio vas a ver **"Creá la cuenta de …"**: ahí elegís el usuario y la contraseña del chico.
 
-1. Abrí el **enlace de instalación** que te pasa Claude. Ya trae el código de un solo uso.
-2. Completá tu nombre, tu email y una contraseña → **Crear mi cuenta**.
-3. Vas a quedar en **Administración**: ahí creás el usuario y la contraseña de Benja.
-4. En el celular de cada uno: abrir el enlace en Chrome → menú **⋮** → **Agregar a pantalla principal**.
+## El jugador
 
-## Después
+Entra con el **usuario** y la **contraseña** que le creó su papá o mamá.
 
-- **Benja** entra con su usuario (por ejemplo `benja`) y su contraseña.
-- **Cambiar la contraseña de Benja:** Administración → "Cambiar contraseña de Benja".
-- **Las actualizaciones** las publica Claude. No hay que hacer nada.
+## Compartir con otra familia
+
+Pasales el enlace. Cada familia crea su propia cuenta y **solo ve sus propios datos**.
+
+## Instalar en el celular
+
+Abrí el enlace en Chrome → menú **⋮** → **Agregar a pantalla principal**.

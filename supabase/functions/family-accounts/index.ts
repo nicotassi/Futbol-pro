@@ -1,25 +1,20 @@
 /**
  * FUTBOLISTA PRO · Edge Function "family-accounts"
  *
- * Crea y administra las cuentas SIN abrir el registro público:
- *   - status                 (público)  ¿La app ya fue configurada?
- *   - bootstrap              (público + código de instalación de un solo uso)
- *                            Crea la cuenta de papá, el jugador y el vínculo.
+ * Crea y administra las cuentas (el registro directo de Supabase Auth está
+ * cerrado en la base; todas las cuentas pasan por acá):
+ *   - signup                 (público)  Una familia nueva: cuenta del adulto,
+ *                            su jugador y el vínculo de administrador.
  *   - create-player-account  (solo papá) Crea el usuario del jugador.
  *   - reset-player-password  (solo papá) Cambia la contraseña del jugador.
  *
  * Usa la clave secreta (service_role), que Supabase inyecta en el entorno de la
  * función: nunca llega al navegador. Se despliega con verify_jwt = false porque
- * "status" y "bootstrap" se usan antes de tener sesión; la identidad de papá se
+ * "signup" se usa antes de tener sesión; la identidad de papá se
  * verifica acá mismo en las acciones protegidas.
  */
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import {
-  playerEmail,
-  validateBootstrap,
-  validatePassword,
-  validatePlayerAccount,
-} from './logic.ts';
+import { playerEmail, validateSignup, validatePassword, validatePlayerAccount } from './logic.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,15 +34,6 @@ function serviceClient(): SupabaseClient {
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !key) throw new Error('Faltan variables de entorno de Supabase.');
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-}
-
-async function isConfigured(db: SupabaseClient): Promise<boolean> {
-  const { count, error } = await db
-    .from('player_access')
-    .select('user_id', { count: 'exact', head: true })
-    .eq('role', 'admin');
-  if (error) throw error;
-  return (count ?? 0) > 0;
 }
 
 /** Devuelve el player_id que administra quien llama, o null. */
@@ -77,17 +63,10 @@ async function inviteEmail(db: SupabaseClient, email: string) {
   if (error) throw error;
 }
 
-async function bootstrap(db: SupabaseClient, body: Record<string, unknown>) {
-  const input = validateBootstrap(body);
+async function signup(db: SupabaseClient, body: Record<string, unknown>) {
+  const input = validateSignup(body);
   if (!input.ok) return fail(400, input.error);
-  const { code, email, password, adminName, playerName } = input.data;
-
-  if (await isConfigured(db))
-    return fail(409, 'La app ya está configurada. Ingresá con tu cuenta.');
-
-  const { data: valid, error: codeError } = await db.rpc('consume_setup_code', { p_code: code });
-  if (codeError) throw codeError;
-  if (!valid) return fail(403, 'El código de instalación no es válido, ya se usó o venció.');
+  const { email, password, adminName, playerName } = input.data;
 
   let createdUserId: string | null = null;
   try {
@@ -96,12 +75,11 @@ async function bootstrap(db: SupabaseClient, body: Record<string, unknown>) {
       email,
       password,
       email_confirm: true,
-      app_metadata: { fp_invited: true },
       user_metadata: { display_name: adminName },
     });
     if (userError) {
       if (/already|registered|exists/i.test(userError.message)) {
-        throw new UserFacingError('Ya existe una cuenta con ese email.');
+        throw new UserFacingError('Ya existe una cuenta con ese email. Ingresá con tu contraseña.');
       }
       throw userError;
     }
@@ -121,9 +99,8 @@ async function bootstrap(db: SupabaseClient, body: Record<string, unknown>) {
 
     return reply(200, { ok: true });
   } catch (error) {
-    // Deshacer para poder reintentar con el mismo código.
+    // Deshacer para no dejar cuentas a medias.
     if (createdUserId) await db.auth.admin.deleteUser(createdUserId);
-    await db.rpc('release_setup_code', { p_code: code });
     throw error;
   }
 }
@@ -158,7 +135,6 @@ async function createPlayerAccount(
     email: playerEmail(input.data.username),
     password: input.data.password,
     email_confirm: true,
-    app_metadata: { fp_invited: true },
     user_metadata: { display_name: player.first_name, username: input.data.username },
   });
   if (userError) {
@@ -219,10 +195,8 @@ Deno.serve(async (req) => {
   try {
     const db = serviceClient();
     switch (body.action) {
-      case 'status':
-        return reply(200, { ok: true, configured: await isConfigured(db) });
-      case 'bootstrap':
-        return await bootstrap(db, body);
+      case 'signup':
+        return await signup(db, body);
       case 'create-player-account':
         return await createPlayerAccount(db, req, body);
       case 'reset-player-password':

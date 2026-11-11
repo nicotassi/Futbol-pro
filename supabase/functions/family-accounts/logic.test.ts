@@ -2,46 +2,40 @@ import { describe, expect, it } from 'vitest';
 import { PLAYER_EMAIL_DOMAIN as APP_DOMAIN } from '../../../src/services/identity';
 import {
   PLAYER_EMAIL_DOMAIN,
-  validateBootstrap,
+  validateSignup,
   validatePassword,
   validatePlayerAccount,
 } from './logic';
 
 const valid = {
-  code: 'abcd-efgh',
   email: ' Papa@Example.com ',
   password: 'segura-123',
   adminName: 'Nico',
   playerName: 'Benja',
 };
 
-describe('validateBootstrap', () => {
+describe('validateSignup', () => {
   it('normaliza los datos válidos', () => {
-    expect(validateBootstrap(valid)).toEqual({
+    expect(validateSignup(valid)).toEqual({
       ok: true,
       data: {
-        code: 'ABCD-EFGH',
         email: 'papa@example.com',
         password: 'segura-123',
         adminName: 'Nico',
         playerName: 'Benja',
       },
     });
-    expect(validateBootstrap({ ...valid, code: 'ABCDEFGH' })).toMatchObject({
-      ok: true,
-      data: { code: 'ABCD-EFGH' },
-    });
   });
 
   it('rechaza datos inválidos con mensajes en español', () => {
-    expect(validateBootstrap({ ...valid, code: '123' })).toEqual({
+    expect(validateSignup({ ...valid, playerName: '' })).toEqual({
       ok: false,
-      error: 'El código de instalación no es válido.',
+      error: 'Ingresá el nombre del jugador.',
     });
-    expect(validateBootstrap({ ...valid, email: 'nope' })).toMatchObject({ ok: false });
-    expect(validateBootstrap({ ...valid, password: 'corta' })).toMatchObject({ ok: false });
-    expect(validateBootstrap({ ...valid, adminName: '  ' })).toMatchObject({ ok: false });
-    expect(validateBootstrap({ ...valid, email: `x@${PLAYER_EMAIL_DOMAIN}` })).toMatchObject({
+    expect(validateSignup({ ...valid, email: 'nope' })).toMatchObject({ ok: false });
+    expect(validateSignup({ ...valid, password: 'corta' })).toMatchObject({ ok: false });
+    expect(validateSignup({ ...valid, adminName: '  ' })).toMatchObject({ ok: false });
+    expect(validateSignup({ ...valid, email: `x@${PLAYER_EMAIL_DOMAIN}` })).toMatchObject({
       ok: false,
     });
   });

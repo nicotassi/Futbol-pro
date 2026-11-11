@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import DashboardPage from '@/pages/Dashboard/DashboardPage';
@@ -7,7 +7,7 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 import { RequireAdmin } from '@/features/auth/RequireAdmin';
 
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
-const SetupPage = lazy(() => import('@/features/auth/SetupPage'));
+const SignupPage = lazy(() => import('@/features/auth/SignupPage'));
 
 // Pantallas secundarias en chunks separados: el inicio carga más rápido en el celular.
 const TrainingPage = lazy(() => import('@/pages/Training/TrainingPage'));
@@ -41,7 +41,8 @@ const page = (node: ReactNode) => (
 
 export const routes = [
   { path: 'ingresar', element: page(<LoginPage />) },
-  { path: 'configuracion', element: page(<SetupPage />) },
+  { path: 'crear-cuenta', element: page(<SignupPage />) },
+  { path: 'configuracion', element: <Navigate to="/crear-cuenta" replace /> },
   {
     element: (
       <RequireAuth>
