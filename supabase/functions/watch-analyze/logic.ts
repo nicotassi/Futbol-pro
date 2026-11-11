@@ -93,3 +93,14 @@ export const LOW_CONFIDENCE = 0.6;
 export function isValidUploadPath(path: string, playerId: string): boolean {
   return path.startsWith(`${playerId}/`) && !path.includes('..');
 }
+
+/** Mensaje claro (en español) según la respuesta del servicio de IA. */
+export function describeAiError(status: number, body: string): string {
+  if (status === 401 || status === 403)
+    return 'La clave de IA no es válida. Revisá el secreto ANTHROPIC_API_KEY en Supabase (copiá la clave completa, sin espacios).';
+  if (/credit balance|billing/i.test(body))
+    return 'La cuenta de Anthropic no tiene crédito. Cargá saldo en Billing.';
+  if (status === 429) return 'Demasiadas consultas a la IA. Probá de nuevo en un minuto.';
+  if (status === 404) return 'El modelo de IA configurado no existe (revisá WATCH_AI_MODEL).';
+  return `El servicio de IA respondió ${status}.`;
+}

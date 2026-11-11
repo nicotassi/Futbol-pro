@@ -18,6 +18,8 @@ import {
   addManualMetric,
   analyzeUploads,
   fetchMetrics,
+  fetchUploads,
+  retryAnalysis,
   metricLabels,
   reviewMetric,
   uploadCapture,
@@ -54,7 +56,18 @@ export default function WatchUploadPage() {
     queryFn: () => fetchMetrics(player.id),
     refetchOnMount: 'always',
   });
-  const refresh = () => queryClient.invalidateQueries({ queryKey: watchKeys.metrics(player.id) });
+  const uploads = useQuery({
+    queryKey: watchKeys.uploads(player.id),
+    queryFn: () => fetchUploads(player.id),
+    refetchOnMount: 'always',
+  });
+  const failed = (uploads.data ?? []).filter(
+    (u) => u.workout_session_id === current && u.processing_status === 'failed',
+  );
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: watchKeys.metrics(player.id) });
+    await queryClient.invalidateQueries({ queryKey: watchKeys.uploads(player.id) });
+  };
   const forSession = (metrics.data ?? []).filter(
     (m) => m.workout_session_id === current && m.validation_status !== 'rejected',
   );
@@ -99,7 +112,7 @@ export default function WatchUploadPage() {
           const total = (res.results ?? []).reduce((n, r) => n + (r.count ?? 0), 0);
           if (!res.ok || failed)
             errors.push(
-              (failed?.error ?? res.error ?? 'No se pudo analizar') +
+              (failed?.error ?? res.error ?? 'No se pudo analizar.') +
                 ' Las capturas quedaron guardadas: podés cargar los datos a mano abajo.',
             );
           else
@@ -178,6 +191,51 @@ export default function WatchUploadPage() {
             >
               {message.text}
             </p>
+          )}
+
+          {failed.length > 0 && (
+            <Section title="Capturas sin analizar">
+              <ul className="flex flex-col gap-2.5">
+                {failed.map((u) => (
+                  <li key={u.id}>
+                    <Card>
+                      <p className="text-sm font-medium">{u.original_filename ?? 'Captura'}</p>
+                      <p className="mt-0.5 text-xs text-danger">{u.processing_error}</p>
+                      <Button
+                        className="mt-3"
+                        size="sm"
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={() =>
+                          void guard(async () => {
+                            setBusy(true);
+                            try {
+                              const res = await retryAnalysis(u.id);
+                              const bad = res.results?.find((r) => r.status === 'failed');
+                              if (!res.ok || bad)
+                                setMessage({
+                                  tone: 'error',
+                                  text: bad?.error ?? res.error ?? 'No se pudo analizar.',
+                                });
+                              else
+                                setMessage({
+                                  tone: 'ok',
+                                  text: 'Listo: revisá los datos extraídos.',
+                                });
+                              await refresh();
+                            } finally {
+                              setBusy(false);
+                            }
+                          })
+                        }
+                      >
+                        Reintentar análisis
+                      </Button>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+            </Section>
           )}
 
           <Section title="Para revisar">

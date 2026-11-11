@@ -9,7 +9,13 @@
  * Body: { upload_ids: string[] }
  */
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import { isValidUploadPath, normalizeMetrics, SYSTEM_PROMPT, TOOL } from './logic.ts';
+import {
+  describeAiError,
+  isValidUploadPath,
+  normalizeMetrics,
+  SYSTEM_PROMPT,
+  TOOL,
+} from './logic.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -54,7 +60,7 @@ async function analyzeImage(apiKey: string, model: string, mediaType: string, da
       ],
     }),
   });
-  if (!res.ok) throw new Error(`El servicio de IA respondió ${res.status}.`);
+  if (!res.ok) throw new Error(describeAiError(res.status, await res.text().catch(() => '')));
   const json = await res.json();
   const block = (json.content ?? []).find((b: { type: string }) => b.type === 'tool_use');
   return normalizeMetrics(block?.input);
@@ -86,7 +92,10 @@ Deno.serve(async (req) => {
   }
   if (ids.length === 0) return reply(400, { ok: false, error: 'No hay capturas para analizar.' });
 
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+  const apiKey = Deno.env
+    .get('ANTHROPIC_API_KEY')
+    ?.trim()
+    .replace(/^["']|["']$/g, '');
   const model = Deno.env.get('WATCH_AI_MODEL') ?? 'claude-sonnet-5-5';
 
   const { data: uploads } = await db.from('watch_uploads').select('*').in('id', ids);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isValidUploadPath, normalizeMetrics } from './logic';
+import { describeAiError, isValidUploadPath, normalizeMetrics } from './logic';
 
 describe('normalizeMetrics', () => {
   it('acepta métricas válidas y limpia los valores', () => {
@@ -54,5 +54,14 @@ describe('rutas de imágenes', () => {
     expect(isValidUploadPath('p1/s1/a.jpg', 'p1')).toBe(true);
     expect(isValidUploadPath('p2/s1/a.jpg', 'p1')).toBe(false);
     expect(isValidUploadPath('p1/../p2/a.jpg', 'p1')).toBe(false);
+  });
+});
+
+describe('describeAiError', () => {
+  it('explica la clave inválida, la falta de crédito y el límite', () => {
+    expect(describeAiError(401, '')).toMatch(/clave de IA no es válida/);
+    expect(describeAiError(400, 'Your credit balance is too low')).toMatch(/crédito/);
+    expect(describeAiError(429, '')).toMatch(/Demasiadas/);
+    expect(describeAiError(500, '')).toBe('El servicio de IA respondió 500.');
   });
 });

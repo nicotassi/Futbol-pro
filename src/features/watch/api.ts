@@ -65,7 +65,7 @@ export async function uploadCapture(opts: {
     .from('watch-screenshots')
     .upload(path, opts.blob, { contentType: 'image/jpeg', upsert: false });
   // Si ya estaba subida (misma imagen), seguimos: el registro es único por sesión y huella.
-  if (upErr && !/exists|duplicate/i.test(upErr.message)) throw upErr;
+  if (upErr && !/exists|duplicate/i.test(upErr.message ?? '')) throw upErr;
   const { data, error } = await client
     .from('watch_uploads')
     .insert({
@@ -78,7 +78,17 @@ export async function uploadCapture(opts: {
     .select('id')
     .single();
   if (error) {
-    if (error.code === '23505') throw new Error('Esa captura ya estaba cargada en esta sesión.');
+    if (error.code === '23505') {
+      // Ya estaba cargada: se reutiliza para poder volver a analizarla.
+      const { data: existing } = await client
+        .from('watch_uploads')
+        .select('id')
+        .eq('workout_session_id', opts.sessionId)
+        .eq('image_sha256', opts.sha256)
+        .single();
+      if (existing) return existing.id;
+      throw new Error('Esa captura ya estaba cargada en esta sesión.');
+    }
     throw error;
   }
   return data.id;
@@ -139,3 +149,6 @@ export async function fetchConfirmedMetrics(sessionId: string): Promise<WatchMet
   if (error) throw error;
   return data;
 }
+
+/** Vuelve a analizar una captura que falló. */
+export const retryAnalysis = (uploadId: string) => analyzeUploads([uploadId]);
