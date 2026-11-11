@@ -10,7 +10,7 @@ export function OfflineBanner() {
   return (
     <div
       role="status"
-      className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-ink px-4 py-2 text-xs font-medium text-paper pt-safe"
+      className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-coal px-4 py-2 text-xs font-medium text-bone pt-safe"
     >
       {online ? (
         <>

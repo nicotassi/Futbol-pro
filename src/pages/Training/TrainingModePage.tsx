@@ -179,7 +179,7 @@ function ActiveView({
   const completedCount = session.items.filter((i) => i.completed).length;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-ink text-paper">
+    <div className="flex min-h-dvh flex-col bg-coal text-bone">
       <header className="mx-auto flex w-full max-w-xl items-center gap-2 px-3 pt-3 pt-safe">
         <IconButton
           tone="dark"
@@ -207,7 +207,7 @@ function ActiveView({
             key={i}
             className={cn(
               'h-1 flex-1 rounded-full',
-              it.completed ? 'bg-gold' : i === session.index ? 'bg-gold/60' : 'bg-ink-3',
+              it.completed ? 'bg-gold' : i === session.index ? 'bg-gold/60' : 'bg-coal-3',
             )}
           />
         ))}
@@ -219,20 +219,20 @@ function ActiveView({
       >
         <div className="flex flex-wrap justify-center gap-1.5 text-xs font-semibold">
           {item.sets && (
-            <span className="rounded-full bg-ink-2 px-2.5 py-1 text-gold">{item.sets} series</span>
+            <span className="rounded-full bg-coal-2 px-2.5 py-1 text-gold">{item.sets} series</span>
           )}
           {item.reps && (
-            <span className="rounded-full bg-ink-2 px-2.5 py-1 text-gold">
+            <span className="rounded-full bg-coal-2 px-2.5 py-1 text-gold">
               {item.reps} repeticiones
             </span>
           )}
           {item.durationSec && (
-            <span className="rounded-full bg-ink-2 px-2.5 py-1 text-gold">
+            <span className="rounded-full bg-coal-2 px-2.5 py-1 text-gold">
               {formatClock(item.durationSec)}
             </span>
           )}
           {item.restSec ? (
-            <span className="rounded-full bg-ink-2 px-2.5 py-1 text-fog">
+            <span className="rounded-full bg-coal-2 px-2.5 py-1 text-fog">
               Descanso {item.restSec} s
             </span>
           ) : null}
@@ -240,7 +240,7 @@ function ActiveView({
         <h1 className="mt-3 text-3xl leading-tight font-semibold">{item.name}</h1>
         {item.objective && <p className="mt-2 max-w-sm text-sm text-fog">{item.objective}</p>}
         {item.instructions && (
-          <p className="mt-3 max-w-sm rounded-[12px] bg-ink-2 px-3 py-2 text-sm text-gold-light">
+          <p className="mt-3 max-w-sm rounded-[12px] bg-coal-2 px-3 py-2 text-sm text-gold-light">
             {item.instructions}
           </p>
         )}
@@ -285,7 +285,7 @@ function ActiveView({
         )}
 
         {item.steps.length > 0 && (
-          <details className="mt-6 w-full max-w-sm rounded-[14px] bg-ink-2 px-4 py-3 text-left text-sm">
+          <details className="mt-6 w-full max-w-sm rounded-[14px] bg-coal-2 px-4 py-3 text-left text-sm">
             <summary className="cursor-pointer font-semibold text-gold">Cómo se hace</summary>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-fog">
               {item.steps.map((s, i) => (
@@ -339,7 +339,7 @@ function ActiveView({
             type="button"
             onClick={watch.running ? watch.pause : watch.start}
             aria-label={watch.running ? 'Pausar' : 'Iniciar cronómetro'}
-            className="grid size-20 place-items-center rounded-full bg-gold text-ink shadow-[var(--shadow-float)] transition-transform active:scale-95"
+            className="grid size-20 place-items-center rounded-full bg-gold text-coal shadow-[var(--shadow-float)] transition-transform active:scale-95"
           >
             {watch.running ? (
               <Pause className="size-8" fill="currentColor" />
@@ -492,8 +492,8 @@ function FinishSheet({
 
 function DoneScreen({ mode, onClose }: { mode: 'online' | 'offline'; onClose: () => void }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-ink px-6 text-center text-paper">
-      <span className="grid size-20 place-items-center rounded-full bg-gold text-ink" aria-hidden>
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-coal px-6 text-center text-bone">
+      <span className="grid size-20 place-items-center rounded-full bg-gold text-coal" aria-hidden>
         <Check className="size-10" />
       </span>
       <h1 className="text-2xl font-semibold">¡Sesión registrada!</h1>
@@ -519,7 +519,7 @@ function ConflictScreen({
   onDiscard: () => void;
 }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-ink px-6 text-center text-paper">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-coal px-6 text-center text-bone">
       <h1 className="text-xl font-semibold">Tenés otro entrenamiento sin terminar</h1>
       <p className="max-w-xs text-sm text-fog">
         “{other.title}” quedó guardado en el ejercicio {other.index + 1} de {other.items.length}.
@@ -528,7 +528,7 @@ function ConflictScreen({
         <Button variant="accent" onClick={onContinueOther}>
           Continuar “{other.title}”
         </Button>
-        <Button variant="ghost" className="text-paper hover:bg-ink-2" onClick={onDiscard}>
+        <Button variant="ghost" className="text-bone hover:bg-coal-2" onClick={onDiscard}>
           Descartarlo y empezar este
         </Button>
       </div>

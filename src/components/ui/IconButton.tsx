@@ -22,7 +22,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       className={cn(
         'inline-flex shrink-0 items-center justify-center rounded-full transition-colors duration-150 active:scale-95 disabled:opacity-40',
         size === 'md' ? 'size-11' : 'size-14',
-        tone === 'light' ? 'text-ink hover:bg-sand' : 'text-paper hover:bg-ink-3',
+        tone === 'light' ? 'text-ink hover:bg-sand' : 'text-bone hover:bg-coal-3',
         className,
       )}
       {...rest}

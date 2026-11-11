@@ -20,7 +20,7 @@ export function Avatar({ name, size = 'md', className }: AvatarProps) {
     <span
       aria-hidden
       className={cn(
-        'inline-grid shrink-0 place-items-center rounded-full bg-ink font-display font-semibold text-gold ring-2 ring-gold/70 ring-offset-2 ring-offset-transparent',
+        'inline-grid shrink-0 place-items-center rounded-full bg-coal font-display font-semibold text-gold ring-2 ring-gold/70 ring-offset-2 ring-offset-transparent',
         sizes[size],
         className,
       )}

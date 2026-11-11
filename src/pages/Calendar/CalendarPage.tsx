@@ -200,7 +200,7 @@ export default function CalendarPage() {
                     className={cn(
                       'tabular grid aspect-square place-items-center rounded-[10px] text-sm transition-colors',
                       isToday
-                        ? 'bg-ink font-semibold text-gold hover:bg-ink-2'
+                        ? 'bg-coal font-semibold text-gold hover:bg-coal-2'
                         : inMonth
                           ? 'text-ink hover:bg-sand'
                           : 'text-muted/50',
@@ -230,7 +230,7 @@ export default function CalendarPage() {
                 <span
                   className={cn(
                     'grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold tabular',
-                    isSameDay(d, today) ? 'bg-ink text-gold' : 'bg-sand',
+                    isSameDay(d, today) ? 'bg-coal text-gold' : 'bg-sand',
                   )}
                 >
                   {format(d, 'd')}

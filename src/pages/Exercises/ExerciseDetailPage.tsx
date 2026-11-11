@@ -98,7 +98,7 @@ export default function ExerciseDetailPage() {
       <Card tone="dark">
         <div className="flex items-start gap-3">
           <span
-            className="grid size-12 shrink-0 place-items-center rounded-full bg-ink-2 text-gold ring-1 ring-gold/40"
+            className="grid size-12 shrink-0 place-items-center rounded-full bg-coal-2 text-gold ring-1 ring-gold/40"
             aria-hidden
           >
             <Icon className="size-6" />
@@ -114,7 +114,7 @@ export default function ExerciseDetailPage() {
           </div>
         </div>
         {exercise.objective && (
-          <p className="mt-4 text-[0.9375rem] text-paper/90">{exercise.objective}</p>
+          <p className="mt-4 text-[0.9375rem] text-bone/90">{exercise.objective}</p>
         )}
       </Card>
 
@@ -140,7 +140,7 @@ export default function ExerciseDetailPage() {
                 key={i}
                 className="flex gap-3 rounded-[14px] bg-surface p-3 text-sm ring-1 ring-line"
               >
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-ink text-xs font-bold text-gold">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-coal text-xs font-bold text-gold">
                   {i + 1}
                 </span>
                 {step}

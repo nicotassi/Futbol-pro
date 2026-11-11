@@ -46,11 +46,11 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-ink text-paper">
+    <div className="min-h-dvh bg-coal text-bone">
       <main className="mx-auto flex w-full max-w-sm flex-col px-6 py-8 pt-safe">
         <Link
           to="/ingresar"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-fog hover:text-paper"
+          className="mb-6 inline-flex items-center gap-1 text-sm text-fog hover:text-bone"
         >
           <ChevronLeft className="size-4" aria-hidden /> Ya tengo cuenta
         </Link>

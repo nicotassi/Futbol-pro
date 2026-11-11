@@ -257,7 +257,7 @@ function WorkoutBuilder({
                 <li key={it.key}>
                   <Card>
                     <div className="flex items-center gap-2">
-                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ink text-xs font-bold text-gold">
+                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-coal text-xs font-bold text-gold">
                         {i + 1}
                       </span>
                       <p className="min-w-0 flex-1 truncate font-display font-semibold">

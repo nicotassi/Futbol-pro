@@ -21,7 +21,7 @@ export function ProgressBar({ value, label, className, tone = 'light' }: Progres
       aria-valuenow={v}
       className={cn(
         'h-2 w-full overflow-hidden rounded-full',
-        tone === 'light' ? 'bg-sand' : 'bg-ink-3',
+        tone === 'light' ? 'bg-sand' : 'bg-coal-3',
         className,
       )}
     >
@@ -68,7 +68,7 @@ export function ProgressRing({
           r={r}
           fill="none"
           strokeWidth={stroke}
-          className={tone === 'light' ? 'stroke-sand' : 'stroke-ink-3'}
+          className={tone === 'light' ? 'stroke-sand' : 'stroke-coal-3'}
         />
         <circle
           cx={size / 2}

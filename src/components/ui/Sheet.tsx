@@ -43,7 +43,7 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
         if (e.target === ref.current) onClose();
       }}
       className={cn(
-        'm-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-ink/50 backdrop:backdrop-blur-[2px]',
+        'm-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-coal/50 backdrop:backdrop-blur-[2px]',
         'sm:m-auto sm:max-w-lg',
       )}
     >

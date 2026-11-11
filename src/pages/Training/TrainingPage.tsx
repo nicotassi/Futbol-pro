@@ -108,7 +108,7 @@ export default function TrainingPage() {
             <Button
               size="sm"
               variant="ghost"
-              className="text-paper hover:bg-ink-2"
+              className="text-bone hover:bg-coal-2"
               onClick={async () => {
                 await clearActiveSession();
                 setActive(null);
@@ -242,7 +242,7 @@ export default function TrainingPage() {
                 className="flex h-full flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-card)] transition-colors hover:border-gold/50"
               >
                 <span
-                  className="grid size-10 place-items-center rounded-full bg-ink text-gold"
+                  className="grid size-10 place-items-center rounded-full bg-coal text-gold"
                   aria-hidden
                 >
                   <Icon className="size-5" />

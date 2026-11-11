@@ -20,6 +20,7 @@ import { useAuth, usePlayer } from '@/contexts/authContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { footLabels, playerSubtitle } from '@/features/players/format';
 import { PlayerEditSheet } from '@/features/players/PlayerEditSheet';
+import { ThemeSwitch } from '@/features/theme/ThemeSwitch';
 
 const links = [
   { to: '/partidos', label: 'Partidos', icon: Trophy },
@@ -87,6 +88,14 @@ export default function ProfilePage() {
           </p>
         </div>
         <Badge tone={isAdmin ? 'dark' : 'gold'}>{isAdmin ? 'Administrador' : 'Jugador'}</Badge>
+      </Card>
+
+      <Card className="mt-4">
+        <p className="mb-2 font-medium">Apariencia</p>
+        <ThemeSwitch />
+        <p className="mt-2 text-xs text-muted">
+          “Automático” usa el modo claro u oscuro de tu celular.
+        </p>
       </Card>
 
       <Card padded={false} className="mt-5">

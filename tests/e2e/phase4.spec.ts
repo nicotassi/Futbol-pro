@@ -131,7 +131,7 @@ test.describe('Bienestar y semáforo', () => {
     await again.getByRole('button', { name: 'Guardar' }).click();
     await expect(page.getByText('Hoy el semáforo está en rojo')).toHaveCount(0);
     expect(mock.tables.wellness_logs).toHaveLength(1);
-    expect(mock.tables.wellness_logs![0]).toMatchObject({ traffic_light: 'green' });
+    await expect.poll(() => mock.tables.wellness_logs![0]?.traffic_light).toBe('green');
   });
 });
 

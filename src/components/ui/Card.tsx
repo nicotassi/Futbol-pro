@@ -5,7 +5,7 @@ export type CardTone = 'light' | 'dark' | 'gold' | 'plain';
 
 const tones: Record<CardTone, string> = {
   light: 'bg-surface border border-line shadow-[var(--shadow-card)]',
-  dark: 'bg-ink text-paper border border-ink-3',
+  dark: 'bg-coal text-bone border border-coal-3',
   gold: 'bg-gold-soft border border-gold/40',
   plain: 'bg-transparent border border-line',
 };

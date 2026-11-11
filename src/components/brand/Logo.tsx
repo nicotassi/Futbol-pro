@@ -62,7 +62,7 @@ export function Wordmark({ tone = 'light', className, showTagline }: WordmarkPro
         <p
           className={cn(
             'font-display text-[0.9375rem] font-bold tracking-[0.14em]',
-            tone === 'light' ? 'text-ink' : 'text-paper',
+            tone === 'light' ? 'text-ink' : 'text-bone',
           )}
         >
           FUTBOLISTA <span className="text-gold">PRO</span>

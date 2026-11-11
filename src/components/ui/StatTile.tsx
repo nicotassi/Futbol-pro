@@ -27,7 +27,7 @@ export function StatTile({
     <div
       className={cn(
         'flex flex-col gap-1 rounded-[14px] p-3.5',
-        tone === 'light' ? 'bg-sand/70' : 'bg-ink-2 ring-1 ring-ink-3',
+        tone === 'light' ? 'bg-sand/70' : 'bg-coal-2 ring-1 ring-coal-3',
         className,
       )}
     >

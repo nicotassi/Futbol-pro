@@ -127,7 +127,7 @@ export default function GoalsPage() {
       {/* Nivel: comienza en cero de verdad (los puntos llegan en la Fase 6). */}
       <Card tone="dark" className="flex items-center gap-4">
         <span
-          className="grid size-14 shrink-0 place-items-center rounded-full bg-ink-2 text-gold ring-1 ring-gold/40"
+          className="grid size-14 shrink-0 place-items-center rounded-full bg-coal-2 text-gold ring-1 ring-gold/40"
           aria-hidden
         >
           <Medal className="size-7" />
@@ -452,7 +452,7 @@ function GoalCard({
                 aria-label={`Marcar ${g.name} al ${p}%`}
                 aria-pressed={g.progress === p}
                 onClick={() => onProgress(p)}
-                className={`h-9 min-w-11 rounded-[10px] border px-2 text-sm font-semibold tabular ${g.progress === p ? 'border-ink bg-ink text-gold' : 'border-line bg-surface hover:bg-sand'}`}
+                className={`h-9 min-w-11 rounded-[10px] border px-2 text-sm font-semibold tabular ${g.progress === p ? 'border-coal bg-coal text-gold' : 'border-line bg-surface hover:bg-sand'}`}
               >
                 {p}%
               </button>

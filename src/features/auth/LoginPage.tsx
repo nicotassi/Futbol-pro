@@ -40,7 +40,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-ink text-paper">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-coal text-bone">
       <div
         aria-hidden
         className="pointer-events-none absolute -top-40 -right-40 size-[28rem] rounded-full border-[18px] border-gold/10"
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
         <Link
           to="/crear-cuenta"
-          className="mt-6 rounded-[14px] border border-gold/50 px-4 py-3 text-center text-sm font-semibold text-gold hover:bg-ink-2"
+          className="mt-6 rounded-[14px] border border-gold/50 px-4 py-3 text-center text-sm font-semibold text-gold hover:bg-coal-2"
         >
           ¿Primera vez? Crear cuenta
         </Link>

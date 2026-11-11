@@ -25,7 +25,7 @@ export const categoryLabels: Record<CalendarCategory, string> = {
 };
 
 export const categoryDot: Record<CalendarCategory, string> = {
-  club_training: 'bg-ink',
+  club_training: 'bg-coal',
   extra_training: 'bg-gold-strong',
   match: 'bg-success',
   assessment: 'bg-warning-bright',

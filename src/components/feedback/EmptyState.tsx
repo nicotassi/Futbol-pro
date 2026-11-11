@@ -34,7 +34,7 @@ export function EmptyState({
           className={cn(
             'grid place-items-center rounded-full',
             compact ? 'size-11' : 'size-14',
-            tone === 'light' ? 'bg-gold-soft text-gold-strong' : 'bg-ink-2 text-gold',
+            tone === 'light' ? 'bg-gold-soft text-gold-strong' : 'bg-coal-2 text-gold',
           )}
           aria-hidden
         >

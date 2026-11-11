@@ -82,7 +82,7 @@ export default function DashboardPage() {
         />
         <div className="relative p-5 sm:p-6">
           <p className="text-sm text-fog">{capitalize(formatLongDate(now))}</p>
-          <h1 className="mt-1 text-[1.75rem] leading-tight font-semibold text-paper sm:text-3xl">
+          <h1 className="mt-1 text-[1.75rem] leading-tight font-semibold text-bone sm:text-3xl">
             {greetingFor(now)}, <span className="text-gold">{greetingName}</span>
           </h1>
           <p className="mt-1 text-sm text-fog">{subtitle}</p>

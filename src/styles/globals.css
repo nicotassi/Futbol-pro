@@ -24,6 +24,12 @@
   --color-gold-strong: #8a6b22; /* dorado para texto sobre fondo claro */
   --color-gold-soft: #f4ecd8; /* fondo de acento muy suave */
 
+  /* Paneles "siempre oscuros" y texto claro sobre ellos (no se invierten en modo oscuro) */
+  --color-coal: #16171a;
+  --color-coal-2: #22242a;
+  --color-coal-3: #2f3239;
+  --color-bone: #faf8f4;
+
   /* Semáforo / estados (solo donde aportan significado) */
   --color-success: #1f7a52;
   --color-success-soft: #e3f2ea;
@@ -69,6 +75,33 @@
   }
 }
 
+/* Modo oscuro: se activa con data-theme="dark" en <html> (ver src/features/theme). */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-paper: #0f1013;
+  --color-surface: #181a1f;
+  --color-sand: #22252b;
+  --color-line: #2d3037;
+  --color-ink: #f2efe8;
+  --color-ink-2: #ddd9cf;
+  --color-ink-3: #c8c4ba;
+  --color-muted: #a3a6ae;
+  --color-fog: #a3a6ae;
+  --color-gold-strong: #dcc079;
+  --color-gold-soft: #2c2614;
+  --color-success: #4fc08a;
+  --color-success-soft: #12281e;
+  --color-warning: #e3ad3a;
+  --color-warning-soft: #2d2410;
+  --color-danger: #e0645a;
+  --color-danger-soft: #33191a;
+  --color-coal: #1c1e23;
+  --color-coal-2: #272a31;
+  --color-coal-3: #363a43;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px -8px rgb(0 0 0 / 0.5);
+  --shadow-float: 0 8px 32px -12px rgb(0 0 0 / 0.8);
+}
+
 @layer base {
   :root {
     --bottom-nav-height: 4.25rem;
@@ -106,6 +139,11 @@
 
   ::selection {
     background: var(--color-gold-soft);
+  }
+
+  input[type='date'],
+  input[type='time'] {
+    color-scheme: inherit;
   }
 
   button:not(:disabled),

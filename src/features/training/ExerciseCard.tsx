@@ -11,7 +11,7 @@ export function ExerciseCard({ exercise, favorite }: { exercise: Exercise; favor
       className="flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3.5 shadow-[var(--shadow-card)] transition-colors hover:border-gold/50"
     >
       <span
-        className="grid size-11 shrink-0 place-items-center rounded-full bg-ink text-gold"
+        className="grid size-11 shrink-0 place-items-center rounded-full bg-coal text-gold"
         aria-hidden
       >
         <Icon className="size-5" />

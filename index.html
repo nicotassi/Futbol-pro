@@ -9,6 +9,20 @@
     <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>Futbolista Pro</title>
+    <script>
+      // Evita el destello blanco: aplica el tema guardado antes de dibujar la página.
+      (function () {
+        try {
+          var p = localStorage.getItem('fp-theme');
+          var dark =
+            p === 'dark' ||
+            (p !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          if (dark)
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0F1013');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

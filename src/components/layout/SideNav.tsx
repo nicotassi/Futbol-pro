@@ -20,7 +20,7 @@ function Item({ to, label, icon: Icon, end }: NavItem) {
       className={({ isActive }) =>
         cn(
           'flex h-11 items-center gap-3 rounded-[12px] px-3 text-sm font-medium transition-colors',
-          isActive ? 'bg-ink-2 text-paper' : 'text-fog hover:bg-ink-2 hover:text-paper',
+          isActive ? 'bg-coal-2 text-bone' : 'text-fog hover:bg-coal-2 hover:text-bone',
         )
       }
     >
@@ -38,7 +38,7 @@ function Item({ to, label, icon: Icon, end }: NavItem) {
 export function SideNav() {
   const { isAdmin } = useAuth();
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-ink px-4 py-6 lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-coal px-4 py-6 lg:flex">
       <Wordmark tone="dark" className="px-2" />
       <nav aria-label="Navegación principal" className="mt-8 flex flex-col gap-1">
         {mainNav.map((item) => (

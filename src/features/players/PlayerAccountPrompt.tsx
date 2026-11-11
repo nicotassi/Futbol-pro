@@ -22,7 +22,7 @@ export function PlayerAccountPrompt() {
       className="mt-4 flex items-center gap-3 rounded-[var(--radius-card)] border border-gold/50 bg-gold-soft p-4 transition-colors hover:bg-gold-soft/70"
     >
       <span
-        className="grid size-10 shrink-0 place-items-center rounded-full bg-ink text-gold"
+        className="grid size-10 shrink-0 place-items-center rounded-full bg-coal text-gold"
         aria-hidden
       >
         <Smartphone className="size-5" />

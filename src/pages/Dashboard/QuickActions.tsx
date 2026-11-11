@@ -57,14 +57,14 @@ export function QuickActions({ isAdmin }: { isAdmin: boolean }) {
             className={cn(
               'group flex h-full min-h-[104px] flex-col justify-between gap-3 rounded-[var(--radius-card)] border p-4 transition-all duration-200 active:scale-[0.98]',
               featured
-                ? 'border-gold/50 bg-gradient-to-br from-gold-light to-gold text-ink shadow-[var(--shadow-card)] hover:brightness-105'
+                ? 'border-gold/50 bg-gradient-to-br from-gold-light to-gold text-coal shadow-[var(--shadow-card)] hover:brightness-105'
                 : 'border-line bg-surface shadow-[var(--shadow-card)] hover:border-gold/50',
             )}
           >
             <span
               className={cn(
                 'grid size-10 place-items-center rounded-full',
-                featured ? 'bg-ink text-gold' : 'bg-gold-soft text-gold-strong',
+                featured ? 'bg-coal text-gold' : 'bg-gold-soft text-gold-strong',
               )}
               aria-hidden
             >
@@ -74,7 +74,9 @@ export function QuickActions({ isAdmin }: { isAdmin: boolean }) {
               <span className="block font-display text-[0.9375rem] leading-tight font-semibold">
                 {label}
               </span>
-              <span className={cn('mt-0.5 block text-xs', featured ? 'text-ink/70' : 'text-muted')}>
+              <span
+                className={cn('mt-0.5 block text-xs', featured ? 'text-coal/70' : 'text-muted')}
+              >
                 {description}
               </span>
             </span>

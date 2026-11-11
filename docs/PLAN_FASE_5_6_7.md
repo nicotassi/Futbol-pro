@@ -32,3 +32,8 @@
 | Tests unitarios (`npm test`)                          | ✅        |
 | Tests e2e (`npm run test:e2e`), Android y escritorio  | ✅        |
 | Migraciones y función aplicadas en Supabase           | ✅        |
+
+## Ajustes posteriores
+
+- **Rutinas más libres:** al armar un entrenamiento, papá puede tocar **"Crear ejercicio nuevo"** dentro de la hoja "Agregar ejercicio": nombre, categoría, minutos y pasos. El ejercicio se guarda en la biblioteca y se suma a la rutina al instante. Se puede repetir un ejercicio, reordenar y ajustar series, repeticiones, duración y descanso de cada uno.
+- **Modo oscuro:** en Perfil → Apariencia: _Automático_ (sigue al celular), _Claro_ u _Oscuro_. Se recuerda en el dispositivo y se aplica antes de dibujar la pantalla (sin destello blanco).

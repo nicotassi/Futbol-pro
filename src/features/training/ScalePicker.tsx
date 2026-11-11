@@ -25,7 +25,9 @@ export function ScalePicker({ label, min, max, value, onChange, labels }: Props)
             onClick={() => onChange(value === n ? null : n)}
             className={cn(
               'grid h-10 min-w-10 place-items-center rounded-[10px] border px-2 text-sm font-semibold tabular transition-colors',
-              value === n ? 'border-ink bg-ink text-gold' : 'border-line bg-surface hover:bg-sand',
+              value === n
+                ? 'border-coal bg-coal text-gold'
+                : 'border-line bg-surface hover:bg-sand',
             )}
           >
             {n}
