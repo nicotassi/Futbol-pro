@@ -1,16 +1,22 @@
 # FASES 5, 6 y 7 — Reloj con IA, evolución y cierre
 
-> Estado: **implementadas y publicadas**. Migración `1200` y la función `watch-analyze` están aplicadas en Supabase.
+> Estado: **implementadas y publicadas**. Migraciones `1100`, `1200` y `1300` aplicadas en Supabase.
 
-## Fase 5 — Registro del reloj (solo papá, `/reloj`)
+## Fase 5 — Datos del reloj (carga manual)
 
-- **Subir capturas** de una sesión: se comprimen en el celular (hasta 2048 px, JPG), se calcula su huella SHA-256 (la misma imagen no se carga dos veces en una sesión) y se guardan en el bucket privado `watch-screenshots`.
-- **Análisis con IA**: la Edge Function `watch-analyze` (solo para el administrador del jugador) lee las imágenes con Claude usando salida estructurada y guarda cada dato como **pendiente**. Instrucción explícita: solo lo visible y legible, nada estimado.
-- **Revisión de papá**: confirmar, corregir (se conserva el valor original) o descartar. Los datos con confianza menor a 60 % se marcan "Requiere revisión manual".
-- **Un solo valor oficial** por sesión y métrica: confirmar otro reemplaza al anterior, que queda como "descartado" (no se borra).
-- **Carga manual** de un dato (sin captura), ya confirmado.
-- Los datos confirmados se ven en el **detalle de cada sesión** del historial. Lo pendiente no cuenta en ninguna estadística.
-- ⚠️ **Falta un paso de papá/Nico: la clave de IA.** Hasta que se cargue el secreto `ANTHROPIC_API_KEY` en Supabase (Edge Functions → Secrets), el análisis automático responde "Falta configurar la clave de IA" y las capturas quedan guardadas; la **carga manual funciona igual**. Opcional: `WATCH_AI_MODEL` para elegir el modelo.
+Se descartó la lectura de capturas con IA (requería pagar la API aparte). En su lugar, **al terminar un entrenamiento** (modo entrenamiento y entrenamiento libre) se pueden cargar a mano los datos que muestra el reloj. Todo es opcional: lo que se deja vacío queda "sin registrar".
+
+| Dato                                     | Validación                                           |
+| ---------------------------------------- | ---------------------------------------------------- |
+| Ritmo cardíaco promedio y máximo         | 30 a 250 lpm; el promedio no puede superar al máximo |
+| Calorías                                 | 0 a 10.000 kcal                                      |
+| Carga de entrenamiento                   | 0 a 3.000                                            |
+| Efecto aeróbico y anaeróbico             | 1,0 a 5,0 con un decimal                             |
+| Zonas VO2 máx e Intensivo (% del tiempo) | 0 a 100 %; entre las dos no pueden pasar de 100 %    |
+
+- Los datos se pueden **cargar o corregir después** desde el detalle de la sesión en el historial.
+- Funcionan **sin conexión** (viajan con la sesión en la cola) y las reglas están también en la base de datos.
+- Se quitó la pantalla "Registro del reloj", y la función `watch-analyze` quedó **desactivada** (responde "desactivada" y no usa ninguna clave). Ya no hace falta `ANTHROPIC_API_KEY`: se puede borrar el secreto y la función desde el panel de Supabase si se quiere. Las tablas `watch_uploads` y `watch_metrics` quedaron sin uso (no se borró nada).
 
 ## Fase 6 — Evolución, calendario y logros
 
@@ -28,7 +34,7 @@
 
 | Prueba                                                | Resultado |
 | ----------------------------------------------------- | --------- |
-| Base de datos (`npm run db:test`): 174 verificaciones | ✅        |
+| Base de datos (`npm run db:test`): 185 verificaciones | ✅        |
 | Tests unitarios (`npm test`)                          | ✅        |
 | Tests e2e (`npm run test:e2e`), Android y escritorio  | ✅        |
 | Migraciones y función aplicadas en Supabase           | ✅        |

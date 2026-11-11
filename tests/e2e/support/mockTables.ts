@@ -53,8 +53,6 @@ export function seedTables(playerId: string): TableStore {
     goals: [],
     assessments: [],
     calendar_events: [],
-    watch_uploads: [],
-    watch_metrics: [],
   };
 }
 
@@ -289,6 +287,14 @@ export function handleRpc(
       notes: blank(s.notes),
       post_state: num(s.post_state),
       client_id: s.client_id,
+      hr_avg: num(s.hr_avg),
+      hr_max: num(s.hr_max),
+      calories: num(s.calories),
+      training_load: num(s.training_load),
+      aerobic_effect: num(s.aerobic_effect),
+      anaerobic_effect: num(s.anaerobic_effect),
+      zone_vo2max_pct: num(s.zone_vo2max_pct),
+      zone_intensive_pct: num(s.zone_intensive_pct),
       updated_at: now(),
     };
     let session = tables.workout_sessions!.find((x) => x.client_id === s.client_id);
@@ -408,60 +414,6 @@ export function handleRpc(
       tables.wellness_logs!.push(log);
     }
     return { status: 200, body: log.id };
-  }
-  if (fn === 'review_watch_metric') {
-    if (caller.role !== 'admin') return forbidden;
-    const m = tables.watch_metrics!.find((x) => x.id === body.p_id);
-    if (!m) return forbidden;
-    const action = body.p_action as string;
-    if (action === 'reject') {
-      Object.assign(m, { validation_status: 'rejected', confirmed_value: null });
-    } else {
-      const value = action === 'confirm' ? m.metric_value : String(body.p_value ?? '').trim();
-      if (!value) return { status: 400, body: { code: '23514', message: 'Valor inválido.' } };
-      tables.watch_metrics!.forEach((o) => {
-        if (
-          o !== m &&
-          o.workout_session_id === m.workout_session_id &&
-          o.metric_type === m.metric_type &&
-          ['confirmed', 'corrected'].includes(o.validation_status as string)
-        )
-          Object.assign(o, { validation_status: 'rejected', confirmed_value: null });
-      });
-      Object.assign(m, {
-        validation_status: action === 'confirm' ? 'confirmed' : 'corrected',
-        confirmed_value: value,
-      });
-    }
-    return { status: 200, body: null };
-  }
-
-  if (fn === 'add_watch_metric') {
-    if (caller.role !== 'admin') return forbidden;
-    tables.watch_metrics!.forEach((o) => {
-      if (
-        o.workout_session_id === body.p_session &&
-        o.metric_type === body.p_type &&
-        ['confirmed', 'corrected'].includes(o.validation_status as string)
-      )
-        Object.assign(o, { validation_status: 'rejected', confirmed_value: null });
-    });
-    const id = uuid();
-    tables.watch_metrics!.push({
-      id,
-      upload_id: null,
-      player_id: body.p_player,
-      workout_session_id: body.p_session,
-      metric_type: body.p_type,
-      metric_value: body.p_value,
-      metric_unit: blank(body.p_unit),
-      source: 'Manual',
-      confidence: 1,
-      validation_status: 'confirmed',
-      confirmed_value: body.p_value,
-      created_at: now(),
-    });
-    return { status: 200, body: id };
   }
   return null;
 }

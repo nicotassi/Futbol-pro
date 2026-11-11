@@ -88,7 +88,13 @@ describe('sesión activa', () => {
     const s = completeSet(goTo(base(), 1));
     const payload = buildSessionPayload(
       s,
-      { actualMinutes: 28, rpe: 6, postState: 4, notes: '  Bien  ' },
+      {
+        actualMinutes: 28,
+        rpe: 6,
+        postState: 4,
+        notes: '  Bien  ',
+        watch: { hr_avg: 140, calories: 300 },
+      },
       new Date('2026-11-11T10:30:00Z'),
     );
     expect(payload.session).toMatchObject({
@@ -96,6 +102,8 @@ describe('sesión activa', () => {
       template_id: 'w1',
       actual_minutes: 28,
       rpe: 6,
+      hr_avg: 140,
+      calories: 300,
       notes: 'Bien',
       status: 'completed',
     });

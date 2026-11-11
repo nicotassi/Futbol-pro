@@ -50,7 +50,6 @@ test('recorre las cinco pestañas sin errores ni scroll horizontal', async ({ pa
 const secondary = [
   { link: 'Registrar partido', heading: 'Partidos' },
   { link: 'Registrar bienestar', heading: 'Recuperación' },
-  { link: 'Subir captura del reloj', heading: 'Registro del reloj' },
   { link: 'Ver evolución', heading: 'Evolución' },
   { link: 'Registrar entrenamiento', heading: 'Entrenar' },
 ];

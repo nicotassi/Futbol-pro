@@ -6,6 +6,8 @@ import { Input, Textarea } from '@/components/ui/Field';
 import { useAuth, usePlayer } from '@/contexts/authContext';
 import { enqueueSession } from '@/services/outbox';
 import { ScalePicker } from './ScalePicker';
+import { WatchFields } from '@/features/sessionWatch/WatchFields';
+import { emptyWatchForm, parseWatchForm, type WatchForm } from '@/features/sessionWatch/watchData';
 import { postStateLabels, rpeLabels } from './format';
 
 /** Registrar un entrenamiento que no salió de una plantilla (club, plaza, etc.). */
@@ -27,6 +29,7 @@ export function FreeSessionSheet({
   const [rpe, setRpe] = useState<number | null>(null);
   const [postState, setPostState] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [watch, setWatch] = useState<WatchForm>(emptyWatchForm);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -37,6 +40,8 @@ export function FreeSessionSheet({
     if (!minutes || !Number.isInteger(mins) || mins < 1 || mins > 600)
       return setError('Indicá los minutos (1 a 600).');
     if (!date || date > today) return setError('La fecha no puede ser futura.');
+    const parsed = parseWatchForm(watch);
+    if ('error' in parsed) return setError(parsed.error);
     setError(null);
     setSaving(true);
     const started = new Date(`${date}T12:00:00`);
@@ -53,12 +58,14 @@ export function FreeSessionSheet({
         notes: notes.trim(),
         post_state: postState,
         client_id: crypto.randomUUID(),
+        ...parsed.data,
       },
       results: [],
     });
     setSaving(false);
     setMinutes('');
     setNotes('');
+    setWatch(emptyWatchForm());
     setRpe(null);
     setPostState(null);
     onSaved();
@@ -108,6 +115,7 @@ export function FreeSessionSheet({
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
         />
+        <WatchFields form={watch} onChange={setWatch} />
         {error && (
           <p
             role="alert"

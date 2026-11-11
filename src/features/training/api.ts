@@ -1,5 +1,6 @@
 import { db } from '@/services/supabase';
 import type { Enums, Tables, TablesInsert } from '@/types/database';
+import type { WatchData } from '@/features/sessionWatch/watchData';
 
 export type Exercise = Tables<'exercises'>;
 export type ExerciseInput = Omit<TablesInsert<'exercises'>, 'player_id' | 'is_custom'>;
@@ -202,7 +203,7 @@ export interface SessionPayload {
     notes: string;
     post_state: number | null;
     client_id: string;
-  };
+  } & Partial<WatchData>;
   results: {
     workout_item_id: string | null;
     exercise_id: string | null;
@@ -223,6 +224,14 @@ export async function sendSession(payload: SessionPayload): Promise<string> {
       actual_minutes: s.actual_minutes ?? '',
       rpe: s.rpe ?? '',
       post_state: s.post_state ?? '',
+      hr_avg: s.hr_avg ?? '',
+      hr_max: s.hr_max ?? '',
+      calories: s.calories ?? '',
+      training_load: s.training_load ?? '',
+      aerobic_effect: s.aerobic_effect ?? '',
+      anaerobic_effect: s.anaerobic_effect ?? '',
+      zone_vo2max_pct: s.zone_vo2max_pct ?? '',
+      zone_intensive_pct: s.zone_intensive_pct ?? '',
     },
     p_results: payload.results.map((r) => ({
       ...r,
@@ -234,4 +243,15 @@ export async function sendSession(payload: SessionPayload): Promise<string> {
   });
   if (error) throw error;
   return data;
+}
+
+/** Carga o corrige los datos del reloj de una sesión ya registrada. */
+export async function updateSessionWatch(id: string, data: WatchData): Promise<void> {
+  const { data: rows, error } = await db()
+    .from('workout_sessions')
+    .update(data)
+    .eq('id', id)
+    .select('id');
+  if (error) throw error;
+  if (rows.length === 0) throw new Error('No tenés permiso para cambiar esta sesión.');
 }

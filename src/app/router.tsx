@@ -24,7 +24,6 @@ const ProfilePage = lazy(() => import('@/pages/Profile/ProfilePage'));
 const MatchesPage = lazy(() => import('@/pages/Matches/MatchesPage'));
 const RecoveryPage = lazy(() => import('@/pages/Recovery/RecoveryPage'));
 const CalendarPage = lazy(() => import('@/pages/Calendar/CalendarPage'));
-const WatchUploadPage = lazy(() => import('@/pages/WatchUpload/WatchUploadPage'));
 const AdministrationPage = lazy(() => import('@/pages/Administration/AdministrationPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFound/NotFoundPage'));
 // Catálogo de componentes: solo existe en desarrollo (se elimina del build de producción).
@@ -99,14 +98,6 @@ export const routes = [
       { path: 'partidos', element: page(<MatchesPage />) },
       { path: 'recuperacion', element: page(<RecoveryPage />) },
       { path: 'calendario', element: page(<CalendarPage />) },
-      {
-        path: 'reloj',
-        element: page(
-          <RequireAdmin title="Registro del reloj">
-            <WatchUploadPage />
-          </RequireAdmin>,
-        ),
-      },
       {
         path: 'admin',
         element: page(

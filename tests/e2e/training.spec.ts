@@ -196,6 +196,22 @@ test('Benja hace un entrenamiento completo, lo retoma tras cerrar y lo registra'
   await sheet.getByRole('button', { name: '6: Exigente' }).click();
   await sheet.getByRole('button', { name: '4: Bien' }).click();
   await sheet.getByLabel('Observaciones').fill('Me costó la plancha');
+
+  // Datos del reloj: se validan y son opcionales
+  await sheet.getByLabel('Ritmo cardíaco promedio').fill('180');
+  await sheet.getByLabel('Ritmo cardíaco máximo').fill('150');
+  await sheet.getByRole('button', { name: 'Guardar sesión' }).click();
+  await expect(
+    sheet.getByText('El ritmo promedio no puede ser mayor que el máximo.'),
+  ).toBeVisible();
+  await sheet.getByLabel('Ritmo cardíaco promedio').fill('142');
+  await sheet.getByLabel('Ritmo cardíaco máximo').fill('178');
+  await sheet.getByLabel('Calorías').fill('320');
+  await sheet.getByLabel('Carga de entrenamiento').fill('95');
+  await sheet.getByLabel('Efecto aeróbico').fill('3,4');
+  await sheet.getByLabel('Efecto anaeróbico').fill('1,2');
+  await sheet.getByLabel('VO2 máx').fill('12,5');
+  await sheet.getByLabel('Intensivo').fill('30');
   await sheet.getByRole('button', { name: 'Guardar sesión' }).click();
 
   await expect(page.getByRole('heading', { name: '¡Sesión registrada!' })).toBeVisible();
@@ -206,6 +222,14 @@ test('Benja hace un entrenamiento completo, lo retoma tras cerrar y lo registra'
     rpe: 6,
     post_state: 4,
     notes: 'Me costó la plancha',
+    hr_avg: 142,
+    hr_max: 178,
+    calories: 320,
+    training_load: 95,
+    aerobic_effect: 3.4,
+    anaerobic_effect: 1.2,
+    zone_vo2max_pct: 12.5,
+    zone_intensive_pct: 30,
   });
   const results = mock.tables.session_results!.filter((r) => r.session_id === session.id);
   expect(results.map((r) => [r.completed, r.sets_done])).toEqual([
@@ -216,6 +240,8 @@ test('Benja hace un entrenamiento completo, lo retoma tras cerrar y lo registra'
   await page.getByRole('button', { name: 'Ver historial' }).click();
   await page.getByRole('button', { name: /Técnica y fuerza/ }).click();
   await expect(page.getByRole('dialog').getByText('6/10 · Exigente')).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('142 lpm')).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('3,4', { exact: true })).toBeVisible();
   await expect(page.getByRole('dialog').getByText('Plancha', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
 
@@ -268,4 +294,34 @@ test('el jugador no puede armar entrenamientos', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Editar' })).toHaveCount(0);
   await page.goto('/entrenar/nuevo');
   await expect(page.getByText('Sección exclusiva de papá')).toBeVisible();
+});
+
+test('se pueden cargar o corregir los datos del reloj después, desde el historial', async ({
+  page,
+}) => {
+  const mock = await mockSupabase(page);
+  await loginAs(page, 'player');
+  await nav(page, 'Entrenar');
+  await page.getByRole('button', { name: 'Registrar entrenamiento libre' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Registrar entrenamiento' });
+  await sheet.getByLabel('Minutos').fill('45');
+  await sheet.getByRole('button', { name: 'Guardar' }).click();
+  await expect.poll(() => mock.tables.workout_sessions!.length).toBe(1);
+  expect(mock.tables.workout_sessions![0]!.hr_avg).toBeNull(); // sin cargar: queda vacío
+
+  await page.goto('/entrenar/historial');
+  await page.getByRole('button', { name: /Entrenamiento del club/ }).click();
+  const detail = page.getByRole('dialog');
+  await expect(detail.getByText('Todavía no se cargaron datos del reloj.')).toBeVisible();
+  await detail.getByRole('button', { name: 'Cargar datos del reloj' }).click();
+  await detail.getByLabel('Calorías').fill('410');
+  await detail.getByLabel('Efecto aeróbico').fill('6');
+  await detail.getByRole('button', { name: 'Guardar datos del reloj' }).click();
+  await expect(
+    detail.getByText('Efecto aeróbico: de 1 a 5, con un decimal (ej. 3,4).'),
+  ).toBeVisible();
+  await detail.getByLabel('Efecto aeróbico').fill('2,8');
+  await detail.getByRole('button', { name: 'Guardar datos del reloj' }).click();
+  await expect(detail.getByText('410 kcal')).toBeVisible();
+  expect(mock.tables.workout_sessions![0]).toMatchObject({ calories: 410, aerobic_effect: 2.8 });
 });

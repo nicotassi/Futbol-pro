@@ -120,7 +120,7 @@ export default function DashboardPage() {
       <PlayerAccountPrompt />
 
       <Section title="Accesos rápidos">
-        <QuickActions isAdmin={isAdmin} />
+        <QuickActions />
       </Section>
 
       <div className="mt-7 grid gap-4 lg:grid-cols-2">

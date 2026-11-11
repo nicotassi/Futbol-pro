@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Activity, Camera, Dumbbell, HeartPulse, Trophy, type LucideIcon } from 'lucide-react';
+import { Activity, Dumbbell, HeartPulse, Trophy, type LucideIcon } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface QuickAction {
@@ -8,7 +8,6 @@ interface QuickAction {
   description: string;
   icon: LucideIcon;
   featured?: boolean;
-  adminOnly?: boolean;
 }
 
 const quickActions: QuickAction[] = [
@@ -37,17 +36,10 @@ const quickActions: QuickAction[] = [
     description: 'Gráficos y tendencias',
     icon: Activity,
   },
-  {
-    to: '/reloj',
-    label: 'Subir captura del reloj',
-    description: 'Análisis con IA',
-    icon: Camera,
-    adminOnly: true,
-  },
 ];
 
-export function QuickActions({ isAdmin }: { isAdmin: boolean }) {
-  const visible = quickActions.filter((a) => isAdmin || !a.adminOnly);
+export function QuickActions() {
+  const visible = quickActions;
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {visible.map(({ to, label, description, icon: Icon, featured }) => (

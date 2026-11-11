@@ -11,7 +11,6 @@ import {
   Trophy,
   User,
   Users,
-  Watch,
 } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -34,7 +33,6 @@ const upcoming: { label: string; icon: typeof User; phase: DevelopmentPhase }[] 
   { label: 'Partidos', icon: Trophy, phase: 4 },
   { label: 'Objetivos', icon: Flag, phase: 4 },
   { label: 'Evaluaciones físicas y técnicas', icon: ClipboardCheck, phase: 4 },
-  { label: 'Revisión de capturas del reloj', icon: Watch, phase: 5 },
   { label: 'Historial completo', icon: FileText, phase: 6 },
   { label: 'Exportar información', icon: Download, phase: 7 },
 ];

@@ -8,7 +8,6 @@ import {
   Pencil,
   Shield,
   Trophy,
-  Watch,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -26,7 +25,6 @@ const links = [
   { to: '/partidos', label: 'Partidos', icon: Trophy },
   { to: '/recuperacion', label: 'Recuperación', icon: HeartPulse },
   { to: '/calendario', label: 'Calendario', icon: CalendarDays },
-  { to: '/reloj', label: 'Registro del reloj', icon: Watch, adminOnly: true },
   { to: '/admin', label: 'Administración', icon: Shield, adminOnly: true },
 ];
 

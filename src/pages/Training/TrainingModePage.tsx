@@ -25,6 +25,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useStopwatch } from '@/hooks/useStopwatch';
 import { friendlyError } from '@/services/errors';
 import { enqueueSession } from '@/services/outbox';
+import { WatchFields } from '@/features/sessionWatch/WatchFields';
+import { emptyWatchForm, parseWatchForm, type WatchForm } from '@/features/sessionWatch/watchData';
 import { formatClock } from '@/utils/date';
 import { cn } from '@/utils/cn';
 import { useExercises } from '@/features/training/hooks';
@@ -396,6 +398,7 @@ function FinishSheet({
   const [rpe, setRpe] = useState<number | null>(null);
   const [postState, setPostState] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [watch, setWatch] = useState<WatchForm>(emptyWatchForm);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -405,8 +408,19 @@ function FinishSheet({
       setError('La duración debe ser un número de minutos entre 1 y 600.');
       return;
     }
+    const parsed = parseWatchForm(watch);
+    if ('error' in parsed) {
+      setError(parsed.error);
+      return;
+    }
     setSaving(true);
-    const payload = buildSessionPayload(session, { actualMinutes: mins, rpe, postState, notes });
+    const payload = buildSessionPayload(session, {
+      actualMinutes: mins,
+      rpe,
+      postState,
+      notes,
+      watch: parsed.data,
+    });
     await enqueueSession(session.userId, payload);
     await clearActiveSession();
     void queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -477,6 +491,7 @@ function FinishSheet({
           rows={2}
           placeholder="¿Qué salió bien? ¿Qué costó?"
         />
+        <WatchFields form={watch} onChange={setWatch} />
         {error && (
           <p
             role="alert"

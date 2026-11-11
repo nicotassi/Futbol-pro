@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { CalendarDays, HeartPulse, Trophy, Watch } from 'lucide-react';
+import { CalendarDays, HeartPulse, Trophy } from 'lucide-react';
 import { mainNav, type NavItem } from '@/config/navigation';
 import { Wordmark } from '@/components/brand/Logo';
 import { useAuth } from '@/contexts/authContext';
@@ -9,7 +9,6 @@ const secondary: (NavItem & { adminOnly?: boolean })[] = [
   { to: '/partidos', label: 'Partidos', icon: Trophy },
   { to: '/recuperacion', label: 'Recuperación', icon: HeartPulse },
   { to: '/calendario', label: 'Calendario', icon: CalendarDays },
-  { to: '/reloj', label: 'Registro del reloj', icon: Watch, adminOnly: true },
 ];
 
 function Item({ to, label, icon: Icon, end }: NavItem) {

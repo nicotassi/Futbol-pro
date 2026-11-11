@@ -47,14 +47,10 @@ test.describe('Benja (jugador)', () => {
   test('ve su dashboard con los datos de la base', async ({ page }) => {
     await expect(page.getByRole('heading', { level: 1, name: greeting })).toContainText('Benja');
     await expect(page.getByText(/^Mediocampista · \d+ años$/)).toBeVisible();
-    // Subir capturas del reloj es tarea de papá.
-    await expect(page.getByRole('link', { name: /Subir captura del reloj/ })).toHaveCount(0);
   });
 
-  test('no puede entrar a Administración ni al Registro del reloj', async ({ page }) => {
+  test('no puede entrar a Administración', async ({ page }) => {
     await page.goto('/admin');
-    await expect(page.getByText('Sección exclusiva de papá')).toBeVisible();
-    await page.goto('/reloj');
     await expect(page.getByText('Sección exclusiva de papá')).toBeVisible();
   });
 

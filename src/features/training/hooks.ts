@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth, usePlayer } from '@/contexts/authContext';
+import { emptyWatchData } from '@/features/sessionWatch/watchData';
 import { outboxSnapshot, subscribeOutbox, type OutboxItem } from '@/services/outbox';
 import {
   fetchExercises,
@@ -68,6 +69,7 @@ export function useSessions() {
       .flatMap((p) => (p.kind === 'finish_session' ? [p] : []))
       .filter((p) => !synced.has(p.id) && p.payload.session.player_id === player.id)
       .map((p) => ({
+        ...emptyWatchData,
         ...p.payload.session,
         id: `pendiente-${p.id}`,
         created_by: null,

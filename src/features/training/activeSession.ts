@@ -1,4 +1,5 @@
 import { del, get, set } from 'idb-keyval';
+import type { WatchData } from '@/features/sessionWatch/watchData';
 import type { Exercise, SessionPayload, WorkoutWithItems } from './api';
 
 /**
@@ -142,6 +143,7 @@ export function elapsedMinutes(session: ActiveSession, now = new Date()): number
 }
 
 export interface FinishForm {
+  watch?: Partial<WatchData>;
   actualMinutes: number | null;
   rpe: number | null;
   postState: number | null;
@@ -166,6 +168,7 @@ export function buildSessionPayload(
       notes: form.notes.trim(),
       post_state: form.postState,
       client_id: session.clientId,
+      ...form.watch,
     },
     results: session.items.map((it) => ({
       workout_item_id: it.workoutItemId,

@@ -1,12 +1,22 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, ChevronRight, CircleDashed, CloudOff, Dumbbell } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Sheet } from '@/components/ui/Sheet';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { useExercises, type SessionView } from './hooks';
-import { fetchSessionResults, trainingKeys } from './api';
-import { fetchConfirmedMetrics, metricLabels } from '@/features/watch/api';
+import { fetchSessionResults, trainingKeys, updateSessionWatch } from './api';
+import { Button } from '@/components/ui/Button';
+import { usePlayer } from '@/contexts/authContext';
+import { friendlyError } from '@/services/errors';
+import { WatchFields } from '@/features/sessionWatch/WatchFields';
+import {
+  formatWatchData,
+  parseWatchForm,
+  watchFormFrom,
+  type WatchData as WatchDataType,
+  type WatchForm,
+} from '@/features/sessionWatch/watchData';
 import { postStateLabels, relativeDay, rpeLabels } from './format';
 
 export function SessionList({ sessions }: { sessions: SessionView[] }) {
@@ -109,35 +119,88 @@ function SessionDetail({ session }: { session: SessionView }) {
           )}
         </div>
       )}
-      {!session.pending && <WatchData sessionId={session.id} />}
+      {!session.pending && <WatchData session={session} />}
     </div>
   );
 }
 
-function WatchData({ sessionId }: { sessionId: string }) {
-  const metrics = useQuery({
-    queryKey: ['watch-session', sessionId],
-    queryFn: () => fetchConfirmedMetrics(sessionId),
-  });
-  const rows = metrics.data ?? [];
-  if (rows.length === 0)
-    return <p className="text-xs text-muted">Sin datos del reloj confirmados para esta sesión.</p>;
+function WatchData({ session }: { session: SessionView }) {
+  const queryClient = useQueryClient();
+  const player = usePlayer();
+  const [editing, setEditing] = useState(false);
+  const [current, setCurrent] = useState<Partial<WatchDataType>>(session);
+  const [form, setForm] = useState<WatchForm>(() => watchFormFrom(session));
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const rows = formatWatchData(current);
+
+  const save = async () => {
+    const parsed = parseWatchForm(form);
+    if ('error' in parsed) return setError(parsed.error);
+    setSaving(true);
+    try {
+      await updateSessionWatch(session.id, parsed.data);
+      setCurrent(parsed.data);
+      await queryClient.invalidateQueries({ queryKey: trainingKeys.sessions(player.id) });
+      setEditing(false);
+      setError(null);
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing)
+    return (
+      <div className="flex flex-col gap-3">
+        <WatchFields form={form} onChange={setForm} />
+        {error && (
+          <p
+            role="alert"
+            className="rounded-[12px] bg-danger-soft px-3 py-2 text-sm font-medium text-danger"
+          >
+            {error}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <Button size="sm" disabled={saving} onClick={() => void save()}>
+            {saving ? 'Guardando…' : 'Guardar datos del reloj'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    );
+
   return (
     <div>
       <p className="mb-2 font-semibold">Datos del reloj</p>
-      <ul className="flex flex-col gap-1">
-        {rows.map((m) => (
-          <li key={m.id} className="flex justify-between gap-3">
-            <span>{metricLabels[m.metric_type].label}</span>
-            <span className="font-medium tabular">
-              {m.confirmed_value} {m.metric_unit ?? ''}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-xs text-muted">
-        Estimaciones del dispositivo, no mediciones clínicas. Confirmadas por papá.
-      </p>
+      {rows.length === 0 ? (
+        <p className="text-muted">Todavía no se cargaron datos del reloj.</p>
+      ) : (
+        <dl className="grid grid-cols-2 gap-2">
+          {rows.map(([label, value]) => (
+            <div key={label} className="rounded-[10px] bg-sand/70 px-3 py-2">
+              <dt className="text-xs text-muted">{label}</dt>
+              <dd className="font-medium tabular">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <Button
+        className="mt-3"
+        size="sm"
+        variant="secondary"
+        onClick={() => {
+          setForm(watchFormFrom(current));
+          setEditing(true);
+        }}
+      >
+        {rows.length === 0 ? 'Cargar datos del reloj' : 'Editar datos del reloj'}
+      </Button>
+      <p className="mt-2 text-xs text-muted">Estimaciones del reloj, no mediciones clínicas.</p>
     </div>
   );
 }
