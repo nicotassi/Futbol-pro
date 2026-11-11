@@ -65,7 +65,9 @@ El catálogo visual de componentes está en `/_design`. Solo existe en modo desa
 
 ## Fase 2: poner en marcha Supabase (una sola vez)
 
-Se hace en unos 15 minutos desde la computadora de papá.
+> **¿No programás?** Seguí la guía **[docs/GUIA_PUESTA_EN_MARCHA.md](docs/GUIA_PUESTA_EN_MARCHA.md)**: todo desde el navegador, copiando y pegando, sin terminal.
+
+Alternativa para desarrolladores (con terminal):
 
 1. **Crear el proyecto.** En [supabase.com](https://supabase.com) creá una cuenta gratuita y un proyecto nuevo:
    - Nombre: `futbolista-pro`.
