@@ -24,6 +24,9 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { capitalize, formatLongDate, greetingFor } from '@/utils/date';
 import { QuickActions } from './QuickActions';
 import { PlayerAccountPrompt } from '@/features/players/PlayerAccountPrompt';
+import { useSessions, useWorkouts } from '@/features/training/hooks';
+import { relativeDay, rpeLabels, scheduledLabel, weeklySummary } from '@/features/training/format';
+import { format } from 'date-fns';
 
 export default function DashboardPage() {
   useDocumentTitle('Inicio');
@@ -35,6 +38,14 @@ export default function DashboardPage() {
   const subtitle = isAdmin
     ? `Seguimiento de ${player.first_name} · ${playerSubtitle(player)}`
     : playerSubtitle(player);
+  const sessions = useSessions();
+  const workouts = useWorkouts();
+  const week = sessions.data ? weeklySummary(sessions.data, now) : null;
+  const last = sessions.data?.find((s) => s.status === 'completed');
+  const today = format(now, 'yyyy-MM-dd');
+  const next = (workouts.data ?? [])
+    .filter((w) => !w.is_template && w.scheduled_for && w.scheduled_for >= today)
+    .sort((a, b) => a.scheduled_for!.localeCompare(b.scheduled_for!))[0];
 
   return (
     <>
@@ -67,13 +78,13 @@ export default function DashboardPage() {
             <StatTile
               tone="dark"
               label="Minutos"
-              value={null}
+              value={week && week.sessions > 0 ? week.minutes : null}
               icon={<Clock className="size-3.5" aria-hidden />}
             />
             <StatTile
               tone="dark"
               label="Sesiones"
-              value={null}
+              value={week && week.sessions > 0 ? week.sessions : null}
               icon={<Dumbbell className="size-3.5" aria-hidden />}
             />
             <StatTile
@@ -83,10 +94,12 @@ export default function DashboardPage() {
               icon={<Trophy className="size-3.5" aria-hidden />}
             />
           </div>
-          <p className="mt-3 text-xs text-fog">
-            Todavía no hay actividad registrada. Los números aparecen cuando cargues tu primer
-            entrenamiento.
-          </p>
+          {(!week || week.sessions === 0) && (
+            <p className="mt-3 text-xs text-fog">
+              Todavía no hay actividad esta semana. Los números aparecen cuando registres un
+              entrenamiento.
+            </p>
+          )}
         </div>
       </Card>
 
@@ -100,45 +113,83 @@ export default function DashboardPage() {
         <Card>
           <CardHeader
             eyebrow="Último entrenamiento"
-            title="Sin sesiones registradas"
+            title={last ? last.title : 'Sin sesiones registradas'}
             icon={
               <IconBadge>
                 <Dumbbell className="size-5" />
               </IconBadge>
             }
-          />
-          <EmptyState
-            compact
-            title="Tu historial empieza acá"
-            description="Cuando completes una sesión vas a ver su duración, ejercicios y esfuerzo."
             action={
-              <LinkButton to="/entrenar" size="sm" variant="secondary">
-                Ir a Entrenar
-              </LinkButton>
+              last && (
+                <Link to="/entrenar/historial" className="text-sm font-semibold text-gold-strong">
+                  Historial
+                </Link>
+              )
             }
           />
+          {last ? (
+            <dl className="grid grid-cols-3 gap-2 text-sm">
+              <div>
+                <dt className="text-xs text-muted">Cuándo</dt>
+                <dd className="font-medium">{relativeDay(new Date(last.started_at))}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">Duración</dt>
+                <dd className="font-medium">
+                  {last.actual_minutes !== null ? `${last.actual_minutes} min` : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">Esfuerzo</dt>
+                <dd className="font-medium">{last.rpe !== null ? rpeLabels[last.rpe] : '—'}</dd>
+              </div>
+            </dl>
+          ) : (
+            <EmptyState
+              compact
+              title="Tu historial empieza acá"
+              description="Cuando completes una sesión vas a ver su duración, ejercicios y esfuerzo."
+              action={
+                <LinkButton to="/entrenar" size="sm" variant="secondary">
+                  Ir a Entrenar
+                </LinkButton>
+              }
+            />
+          )}
         </Card>
 
         <Card>
           <CardHeader
             eyebrow="Próxima actividad"
-            title="Nada programado"
+            title={next ? next.name : 'Nada programado'}
             icon={
               <IconBadge>
                 <CalendarClock className="size-5" />
               </IconBadge>
             }
           />
-          <EmptyState
-            compact
-            title="Calendario libre"
-            description="Entrenamientos del club, partidos y descansos se organizan en el calendario."
-            action={
-              <LinkButton to="/calendario" size="sm" variant="secondary">
-                Abrir calendario
+          {next ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted">
+                {scheduledLabel(next.scheduled_for!)}
+                {next.est_minutes ? ` · ${next.est_minutes} min` : ''}
+              </p>
+              <LinkButton to={`/entrenar/sesion/${next.id}`} size="sm">
+                Empezar
               </LinkButton>
-            }
-          />
+            </div>
+          ) : (
+            <EmptyState
+              compact
+              title="Calendario libre"
+              description="Los entrenamientos con fecha aparecen acá."
+              action={
+                <LinkButton to="/entrenar" size="sm" variant="secondary">
+                  Ver entrenamientos
+                </LinkButton>
+              }
+            />
+          )}
         </Card>
 
         <Card>

@@ -7,6 +7,7 @@
  * reglas para que la interfaz reciba las mismas respuestas que en producción.
  */
 import type { Page, Route } from '@playwright/test';
+import { handleRpc, handleTable, seedTables } from './mockTables';
 
 export const SUPABASE_URL = 'http://127.0.0.1:54321';
 export const PLAYER_ID = '10000000-0000-4000-8000-000000000001';
@@ -92,6 +93,7 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
     patches: [] as unknown[],
     serverDown: false,
     requestsWhileDown: 0,
+    tables: seedTables(PLAYER_ID),
   };
   // Copias mutables de las cuentas existentes en esta simulación.
   const all: Account[] = configured
@@ -296,8 +298,25 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
         }
         return reply([state.player]);
       }
-      default:
-        return json(route, 404, { message: `Ruta no simulada: ${url.pathname}` });
+      default: {
+        const body = ['POST', 'PATCH'].includes(method) ? req.postDataJSON() : null;
+        const caller = { id: user.id, role: user.role };
+        const rpc = url.pathname.match(/^\/rest\/v1\/rpc\/(\w+)$/);
+        const result = rpc
+          ? handleRpc(state.tables, rpc[1]!, body, caller)
+          : handleTable(
+              state.tables,
+              url.pathname.replace('/rest/v1/', ''),
+              method,
+              url.searchParams,
+              body,
+              caller,
+            );
+        if (!result) return json(route, 404, { message: `Ruta no simulada: ${url.pathname}` });
+        if (result.status >= 400) return json(route, result.status, result.body);
+        if (Array.isArray(result.body)) return reply(result.body);
+        return json(route, result.status, result.body);
+      }
     }
   });
 

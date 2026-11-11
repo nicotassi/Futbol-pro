@@ -79,23 +79,10 @@ test('el calendario y la biblioteca funcionan', async ({ page }) => {
   await expect(page.getByText('Lunes')).toBeVisible();
 
   await page.goto('/entrenar/ejercicios');
-  await page.getByRole('button', { name: 'Táctica' }).click();
-  await expect(page).toHaveURL(/categoria=tactics/);
-  await expect(page.getByRole('heading', { name: 'Inteligencia táctica' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Técnica individual' })).toHaveCount(0);
-});
-
-test('vista previa del modo entrenamiento: cronómetro y navegación', async ({ page }) => {
-  await page.goto('/entrenar/sesion/vista-previa');
-  await expect(page.getByText('Vista previa · no se guarda ningún dato')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Activación y movilidad' })).toBeVisible();
-  await page.getByRole('button', { name: 'Ejercicio siguiente' }).click();
-  await expect(page.getByRole('heading', { name: 'Escalera de coordinación' })).toBeVisible();
-  await page.getByRole('button', { name: 'Iniciar', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Pausar' })).toBeVisible();
-  await page.getByRole('button', { name: 'Finalizar sesión' }).click();
-  await page.getByRole('button', { name: 'Finalizar', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrenar$/);
+  await page.getByRole('button', { name: 'Fuerza' }).click();
+  await expect(page).toHaveURL(/categoria=strength/);
+  await expect(page.getByRole('link', { name: /Plancha/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Dominio de pelota/ })).toHaveCount(0);
 });
 
 test('ruta inexistente muestra 404', async ({ page }) => {

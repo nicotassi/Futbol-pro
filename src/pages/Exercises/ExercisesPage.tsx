@@ -1,35 +1,45 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { BookOpen, Search } from 'lucide-react';
+import { Plus, Search, Star } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
-import { Badge } from '@/components/ui/Badge';
+import { LinkButton } from '@/components/ui/Button';
 import { EmptyState } from '@/components/feedback/EmptyState';
-import { PhaseNotice } from '@/components/feedback/PhaseNotice';
+import { ErrorState } from '@/components/feedback/ErrorState';
+import { LoadingState } from '@/components/feedback/LoadingState';
 import { exerciseCategories } from '@/config/exerciseCategories';
+import { useAuth } from '@/contexts/authContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import type { ExerciseCategory } from '@/types/domain';
+import { friendlyError } from '@/services/errors';
+import { useExercises, useFavorites } from '@/features/training/hooks';
+import { ExerciseCard } from '@/features/training/ExerciseCard';
+import type { ExerciseCategory } from '@/features/training/api';
+
+const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 export default function ExercisesPage() {
   useDocumentTitle('Biblioteca de ejercicios');
+  const { isAdmin } = useAuth();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const selected = params.get('categoria') as ExerciseCategory | null;
+  const exercises = useExercises();
+  const favorites = useFavorites();
+  const selected = params.get('categoria') as ExerciseCategory | 'favoritos' | null;
+  const favSet = useMemo(() => new Set(favorites.data ?? []), [favorites.data]);
 
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return exerciseCategories
-      .filter((c) => !selected || c.id === selected)
-      .map((c) => ({
-        ...c,
-        topics: q ? c.topics.filter((t) => t.toLowerCase().includes(q)) : c.topics,
-      }))
-      .filter((c) => c.topics.length > 0);
-  }, [selected, query]);
+    const q = normalize(query.trim());
+    return (exercises.data ?? []).filter((e) => {
+      if (selected === 'favoritos' && !favSet.has(e.id)) return false;
+      if (selected && selected !== 'favoritos' && e.category !== selected) return false;
+      if (!q) return true;
+      return normalize(`${e.name} ${e.objective ?? ''} ${e.description ?? ''}`).includes(q);
+    });
+  }, [exercises.data, selected, query, favSet]);
 
-  const select = (id: ExerciseCategory | null) => {
+  const select = (id: string | null) => {
     const next = new URLSearchParams(params);
     if (id) next.set('categoria', id);
     else next.delete('categoria');
@@ -42,10 +52,21 @@ export default function ExercisesPage() {
       <PageHeader
         title="Biblioteca de ejercicios"
         description="Seis categorías para un desarrollo completo y equilibrado."
+        action={
+          isAdmin && (
+            <LinkButton
+              to="/entrenar/ejercicios/nuevo"
+              size="sm"
+              leadingIcon={<Plus className="size-4" />}
+            >
+              Nuevo
+            </LinkButton>
+          )
+        }
       />
 
       <label className="relative block">
-        <span className="sr-only">Buscar tema</span>
+        <span className="sr-only">Buscar ejercicio</span>
         <Search
           className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted"
           aria-hidden
@@ -54,7 +75,7 @@ export default function ExercisesPage() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar tema (ej.: pase, equilibrio)"
+          placeholder="Buscar (ej.: pase, equilibrio)"
           className="h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface pr-3.5 pl-10 text-[0.9375rem] outline-none focus:border-gold focus:ring-3 focus:ring-gold/25"
         />
       </label>
@@ -62,6 +83,13 @@ export default function ExercisesPage() {
       <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
         <Chip selected={!selected} onClick={() => select(null)}>
           Todas
+        </Chip>
+        <Chip
+          selected={selected === 'favoritos'}
+          onClick={() => select('favoritos')}
+          icon={<Star className="size-4" aria-hidden />}
+        >
+          Favoritos
         </Chip>
         {exerciseCategories.map(({ id, short, icon: Icon }) => (
           <Chip
@@ -75,55 +103,47 @@ export default function ExercisesPage() {
         ))}
       </div>
 
-      <PhaseNotice
-        className="mt-4"
-        phase={3}
-        feature="La ficha completa de cada ejercicio (instrucciones, video, favoritos)"
-      />
-
-      <div className="mt-4 flex flex-col gap-3">
-        {visible.length === 0 && (
+      <div className="mt-4 flex flex-col gap-2.5">
+        {exercises.isPending ? (
+          <LoadingState rows={4} />
+        ) : exercises.isError ? (
+          <ErrorState
+            description={friendlyError(exercises.error)}
+            onRetry={() => void exercises.refetch()}
+          />
+        ) : visible.length === 0 ? (
           <Card>
             <EmptyState
-              icon={<Search className="size-6" />}
-              title="Sin resultados"
-              description="Probá con otra palabra o elegí otra categoría."
+              icon={
+                selected === 'favoritos' ? (
+                  <Star className="size-6" />
+                ) : (
+                  <Search className="size-6" />
+                )
+              }
+              title={selected === 'favoritos' ? 'Todavía no hay favoritos' : 'Sin resultados'}
+              description={
+                selected === 'favoritos'
+                  ? 'Abrí un ejercicio y tocá la estrella para tenerlo a mano.'
+                  : 'Probá con otra palabra o elegí otra categoría.'
+              }
             />
           </Card>
-        )}
-        {visible.map(({ id, name, description, icon: Icon, topics }) => (
-          <Card key={id} as="article">
-            <div className="flex items-start gap-3">
-              <span
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-ink text-gold"
-                aria-hidden
-              >
-                <Icon className="size-5" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="font-display text-lg font-semibold">{name}</h2>
-                <p className="text-sm text-muted">{description}</p>
-              </div>
-            </div>
-            <ul className="mt-3 flex flex-wrap gap-1.5" aria-label={`Temas de ${name}`}>
-              {topics.map((t) => (
-                <li key={t}>
-                  <Badge>{t}</Badge>
+        ) : (
+          <>
+            <p className="text-xs text-muted" aria-live="polite">
+              {visible.length === 1 ? '1 ejercicio' : `${visible.length} ejercicios`}
+            </p>
+            <ul className="flex flex-col gap-2.5">
+              {visible.map((e) => (
+                <li key={e.id}>
+                  <ExerciseCard exercise={e} favorite={favSet.has(e.id)} />
                 </li>
               ))}
             </ul>
-          </Card>
-        ))}
+          </>
+        )}
       </div>
-
-      <Card tone="plain" className="mt-4">
-        <EmptyState
-          compact
-          icon={<BookOpen className="size-5" />}
-          title="Los ejercicios se cargan en la Fase 3"
-          description="Papá podrá crear, editar y eliminar ejercicios personalizados."
-        />
-      </Card>
     </>
   );
 }

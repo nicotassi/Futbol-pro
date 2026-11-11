@@ -6,16 +6,16 @@ Aplicación web progresiva (PWA), mobile-first y privada, para seguir y desarrol
 
 ## Estado del proyecto
 
-| Fase | Contenido                                                  | Estado       |
-| ---- | ---------------------------------------------------------- | ------------ |
-| 0    | Análisis del entorno, arquitectura y plan                  | ✅ Aprobada  |
-| 1    | Diseño, estructura, navegación, PWA base                   | ✅ Validada  |
-| 2    | Supabase: base de datos, usuarios, RLS                     | ⏭️ Siguiente |
-| 3    | Entrenamiento: biblioteca, constructor, modo entrenamiento | —            |
-| 4    | Partidos, bienestar, objetivos, evaluaciones               | —            |
-| 5    | Registro del reloj con IA y validación manual              | —            |
-| 6    | Evolución, gráficos, calendario, logros                    | —            |
-| 7    | Pruebas en Android y publicación                           | —            |
+| Fase | Contenido                                                  | Estado           |
+| ---- | ---------------------------------------------------------- | ---------------- |
+| 0    | Análisis del entorno, arquitectura y plan                  | ✅ Aprobada      |
+| 1    | Diseño, estructura, navegación, PWA base                   | ✅ Validada      |
+| 2    | Supabase: base de datos, usuarios, RLS                     | ✅ En producción |
+| 3    | Entrenamiento: biblioteca, constructor, modo entrenamiento | ✅ En producción |
+| 4    | Partidos, bienestar, objetivos, evaluaciones               | ⏭️ Siguiente     |
+| 5    | Registro del reloj con IA y validación manual              | —                |
+| 6    | Evolución, gráficos, calendario, logros                    | —                |
+| 7    | Pruebas en Android y publicación                           | —                |
 
 Desde la Fase 2 la app guarda los datos en **Supabase** (PostgreSQL con permisos por fila), con inicio de sesión para papá y para Benja. Las funciones de las fases siguientes aparecen con un aviso: "se habilita en la Fase N".
 
@@ -121,6 +121,7 @@ docs/             Arquitectura, planes por fase, capturas
 - [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md): stack, modelo de datos, seguridad, modo sin conexión, IA y decisiones tomadas.
 - [`docs/PLAN_FASE_1.md`](docs/PLAN_FASE_1.md): plan, criterios de aceptación y resultado de la Fase 1.
 - [`docs/PLAN_FASE_2.md`](docs/PLAN_FASE_2.md): base de datos, permisos, autenticación y verificación.
+- [`docs/PLAN_FASE_3.md`](docs/PLAN_FASE_3.md): biblioteca, constructor, modo entrenamiento, historial y modo sin conexión.
 - [`docs/capturas/`](docs/capturas): capturas de pantalla de la Fase 1.
 
 ## Privacidad
