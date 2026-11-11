@@ -347,6 +347,49 @@ export type Database = {
         Update: { removed?: boolean };
         Relationships: [];
       };
+      watch_uploads: {
+        Row: {
+          id: string;
+          player_id: string;
+          workout_session_id: string;
+          image_path: string;
+          original_filename: string | null;
+          image_sha256: string;
+          uploaded_at: string;
+          processing_status: 'queued' | 'processing' | 'done' | 'failed';
+          processing_error: string | null;
+          review_status: 'pending' | 'reviewed';
+        };
+        Insert: {
+          player_id: string;
+          workout_session_id: string;
+          image_path: string;
+          original_filename?: string | null;
+          image_sha256: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      watch_metrics: {
+        Row: {
+          id: string;
+          upload_id: string | null;
+          player_id: string;
+          workout_session_id: string;
+          metric_type: Database['public']['Enums']['watch_metric_type'];
+          metric_value: string;
+          metric_unit: string | null;
+          source: string | null;
+          confidence: number | null;
+          validation_status: 'pending' | 'confirmed' | 'corrected' | 'rejected';
+          confirmed_value: string | null;
+          confirmed_at: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -354,6 +397,20 @@ export type Database = {
       finish_session: { Args: { p_session: Json; p_results: Json }; Returns: string };
       save_match: { Args: { p_match: Json; p_stats: Json; p_reflection: Json }; Returns: string };
       save_wellness: { Args: { p_log: Json }; Returns: string };
+      review_watch_metric: {
+        Args: { p_id: string; p_action: string; p_value: string };
+        Returns: undefined;
+      };
+      add_watch_metric: {
+        Args: {
+          p_player: string;
+          p_session: string;
+          p_type: Database['public']['Enums']['watch_metric_type'];
+          p_value: string;
+          p_unit: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       app_role: 'admin' | 'player';
@@ -362,6 +419,23 @@ export type Database = {
         'speed' | 'technique' | 'strength' | 'endurance' | 'coordination' | 'tactics';
       session_status: 'in_progress' | 'completed' | 'abandoned';
       traffic_light: 'green' | 'yellow' | 'red';
+      watch_metric_type:
+        | 'duration'
+        | 'heart_rate_avg'
+        | 'heart_rate_max'
+        | 'hr_zone_1'
+        | 'hr_zone_2'
+        | 'hr_zone_3'
+        | 'hr_zone_4'
+        | 'hr_zone_5'
+        | 'calories'
+        | 'distance'
+        | 'speed_avg'
+        | 'speed_max'
+        | 'pace_avg'
+        | 'steps'
+        | 'activity_datetime'
+        | 'activity_type';
       goal_status: 'pending' | 'in_progress' | 'completed';
       skill_dimension: 'control' | 'passing' | 'speed' | 'endurance' | 'coordination' | 'vision';
     };
