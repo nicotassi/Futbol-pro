@@ -18,7 +18,8 @@ import { StatTile } from '@/components/ui/StatTile';
 import { LinkButton } from '@/components/ui/Button';
 import { Section } from '@/components/layout/Section';
 import { EmptyState } from '@/components/feedback/EmptyState';
-import { initialPlayer } from '@/config/player';
+import { useAuth, usePlayer } from '@/contexts/authContext';
+import { playerSubtitle } from '@/features/players/format';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { capitalize, formatLongDate, greetingFor } from '@/utils/date';
 import { QuickActions } from './QuickActions';
@@ -26,13 +27,20 @@ import { QuickActions } from './QuickActions';
 export default function DashboardPage() {
   useDocumentTitle('Inicio');
   const now = new Date();
+  const player = usePlayer();
+  const { profile, isAdmin } = useAuth();
+  // Benja ve su propio saludo; papá ve su nombre y a quién está acompañando.
+  const greetingName = isAdmin ? (profile?.display_name ?? 'Papá') : player.first_name;
+  const subtitle = isAdmin
+    ? `Seguimiento de ${player.first_name} · ${playerSubtitle(player)}`
+    : playerSubtitle(player);
 
   return (
     <>
       <div className="flex h-16 items-center justify-between lg:hidden">
         <Wordmark />
         <Link to="/perfil" aria-label="Ir al perfil" className="rounded-full">
-          <Avatar name={initialPlayer.firstName} size="sm" />
+          <Avatar name={player.first_name} size="sm" />
         </Link>
       </div>
 
@@ -49,11 +57,9 @@ export default function DashboardPage() {
         <div className="relative p-5 sm:p-6">
           <p className="text-sm text-fog">{capitalize(formatLongDate(now))}</p>
           <h1 className="mt-1 text-[1.75rem] leading-tight font-semibold text-paper sm:text-3xl">
-            {greetingFor(now)}, <span className="text-gold">{initialPlayer.firstName}</span>
+            {greetingFor(now)}, <span className="text-gold">{greetingName}</span>
           </h1>
-          <p className="mt-1 text-sm text-fog">
-            {initialPlayer.position} · {initialPlayer.ageLabel}
-          </p>
+          <p className="mt-1 text-sm text-fog">{subtitle}</p>
 
           <p className="eyebrow mt-6 mb-2.5 text-gold">Esta semana</p>
           <div className="grid grid-cols-3 gap-2.5">
@@ -84,7 +90,7 @@ export default function DashboardPage() {
       </Card>
 
       <Section title="Accesos rápidos">
-        <QuickActions />
+        <QuickActions isAdmin={isAdmin} />
       </Section>
 
       <div className="mt-7 grid gap-4 lg:grid-cols-2">

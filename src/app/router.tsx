@@ -3,6 +3,10 @@ import { createBrowserRouter } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import DashboardPage from '@/pages/Dashboard/DashboardPage';
+import { RequireAuth } from '@/features/auth/RequireAuth';
+import { RequireAdmin } from '@/features/auth/RequireAdmin';
+
+const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 
 // Pantallas secundarias en chunks separados: el inicio carga más rápido en el celular.
 const TrainingPage = lazy(() => import('@/pages/Training/TrainingPage'));
@@ -35,8 +39,13 @@ const page = (node: ReactNode) => (
 );
 
 export const routes = [
+  { path: 'ingresar', element: page(<LoginPage />) },
   {
-    element: <AppShell />,
+    element: (
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>
+    ),
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'entrenar', element: page(<TrainingPage />) },
@@ -47,14 +56,31 @@ export const routes = [
       { path: 'partidos', element: page(<MatchesPage />) },
       { path: 'recuperacion', element: page(<RecoveryPage />) },
       { path: 'calendario', element: page(<CalendarPage />) },
-      { path: 'reloj', element: page(<WatchUploadPage />) },
-      { path: 'admin', element: page(<AdministrationPage />) },
+      {
+        path: 'reloj',
+        element: page(
+          <RequireAdmin title="Registro del reloj">
+            <WatchUploadPage />
+          </RequireAdmin>,
+        ),
+      },
+      {
+        path: 'admin',
+        element: page(
+          <RequireAdmin title="Administración">
+            <AdministrationPage />
+          </RequireAdmin>,
+        ),
+      },
       ...(DesignSystemPage ? [{ path: '_design', element: page(<DesignSystemPage />) }] : []),
       { path: '*', element: page(<NotFoundPage />) },
     ],
   },
   // Modo entrenamiento: pantalla completa, sin navegación.
-  { path: 'entrenar/sesion/:sessionId', element: page(<TrainingModePage />) },
+  {
+    path: 'entrenar/sesion/:sessionId',
+    element: <RequireAuth>{page(<TrainingModePage />)}</RequireAuth>,
+  },
 ];
 
 export const router = createBrowserRouter(routes);

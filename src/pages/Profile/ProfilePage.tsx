@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   CalendarDays,
   ChevronRight,
   HeartPulse,
   LogOut,
-  Settings,
+  Pencil,
   Shield,
   Trophy,
   Watch,
@@ -14,64 +15,96 @@ import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { PhaseNotice } from '@/components/feedback/PhaseNotice';
 import { LogoMark } from '@/components/brand/Logo';
-import { initialPlayer } from '@/config/player';
+import { useAuth, usePlayer } from '@/contexts/authContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { footLabels, playerSubtitle } from '@/features/players/format';
+import { PlayerEditSheet } from '@/features/players/PlayerEditSheet';
 
 const links = [
   { to: '/partidos', label: 'Partidos', icon: Trophy },
   { to: '/recuperacion', label: 'Recuperación', icon: HeartPulse },
   { to: '/calendario', label: 'Calendario', icon: CalendarDays },
-  { to: '/reloj', label: 'Registro del reloj', icon: Watch },
-  { to: '/admin', label: 'Administración', icon: Shield, badge: 'Papá' },
+  { to: '/reloj', label: 'Registro del reloj', icon: Watch, adminOnly: true },
+  { to: '/admin', label: 'Administración', icon: Shield, adminOnly: true },
 ];
 
 export default function ProfilePage() {
   useDocumentTitle('Perfil');
+  const player = usePlayer();
+  const { profile, isAdmin, user, signOut } = useAuth();
+  const [editing, setEditing] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const details = [
+    ['Club', player.club],
+    ['Categoría', player.category],
+    ['Pierna hábil', player.dominant_foot ? footLabels[player.dominant_foot] : null],
+  ].filter((d): d is [string, string] => Boolean(d[1]));
+
   return (
     <>
       <PageHeader title="Perfil" />
 
-      <Card className="flex items-center gap-4">
-        <Avatar name={initialPlayer.firstName} size="lg" />
-        <div className="min-w-0">
-          <p className="font-display text-xl font-semibold">{initialPlayer.firstName}</p>
-          <p className="text-sm text-muted">
-            {initialPlayer.position} · {initialPlayer.ageLabel}
-          </p>
-          <Badge tone="gold" className="mt-2">
-            Jugador
-          </Badge>
+      <Card>
+        <div className="flex items-center gap-4">
+          <Avatar name={player.first_name} size="lg" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-xl font-semibold">
+              {player.first_name} {player.last_name}
+            </p>
+            <p className="text-sm text-muted">{playerSubtitle(player)}</p>
+          </div>
+          {isAdmin && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setEditing(true)}
+              leadingIcon={<Pencil className="size-4" />}
+            >
+              Editar
+            </Button>
+          )}
         </div>
+        {details.length > 0 && (
+          <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4 text-sm">
+            {details.map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs text-muted">{label}</dt>
+                <dd className="truncate font-medium">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </Card>
 
-      <PhaseNotice
-        className="mt-4"
-        phase={2}
-        feature="El inicio de sesión y la edición del perfil"
-      />
+      <Card className="mt-4 flex items-center gap-3" tone="plain">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-muted">Sesión iniciada como</p>
+          <p className="truncate font-medium">{profile?.display_name}</p>
+          <p className="truncate text-xs text-muted">
+            {profile?.username ? `Usuario: ${profile.username}` : user?.email}
+          </p>
+        </div>
+        <Badge tone={isAdmin ? 'dark' : 'gold'}>{isAdmin ? 'Administrador' : 'Jugador'}</Badge>
+      </Card>
 
       <Card padded={false} className="mt-5">
         <ul className="divide-y divide-line">
-          {links.map(({ to, label, icon: Icon, badge }) => (
-            <li key={to}>
-              <Link
-                to={to}
-                className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-sand/60"
-              >
-                <Icon className="size-5 text-gold-strong" aria-hidden />
-                <span className="flex-1 font-medium">{label}</span>
-                {badge && <Badge>{badge}</Badge>}
-                <ChevronRight className="size-5 text-muted" aria-hidden />
-              </Link>
-            </li>
-          ))}
-          <li className="flex items-center gap-3 px-4 py-3.5 text-muted">
-            <Settings className="size-5" aria-hidden />
-            <span className="flex-1">Ajustes</span>
-            <Badge>Fase 2</Badge>
-          </li>
+          {links
+            .filter((l) => isAdmin || !l.adminOnly)
+            .map(({ to, label, icon: Icon }) => (
+              <li key={to}>
+                <Link
+                  to={to}
+                  className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-sand/60"
+                >
+                  <Icon className="size-5 text-gold-strong" aria-hidden />
+                  <span className="flex-1 font-medium">{label}</span>
+                  <ChevronRight className="size-5 text-muted" aria-hidden />
+                </Link>
+              </li>
+            ))}
         </ul>
       </Card>
 
@@ -79,10 +112,14 @@ export default function ProfilePage() {
         variant="secondary"
         block
         className="mt-5"
-        disabled
+        disabled={signingOut}
+        onClick={async () => {
+          setSigningOut(true);
+          await signOut();
+        }}
         leadingIcon={<LogOut className="size-4" />}
       >
-        Cerrar sesión
+        {signingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
       </Button>
 
       <div className="mt-10 flex flex-col items-center gap-2 text-center">
@@ -92,6 +129,15 @@ export default function ProfilePage() {
           Aplicación privada. Sin publicidad, sin perfiles públicos y sin rankings entre chicos.
         </p>
       </div>
+
+      {isAdmin && user && editing && (
+        <PlayerEditSheet
+          open={editing}
+          onClose={() => setEditing(false)}
+          player={player}
+          userId={user.id}
+        />
+      )}
     </>
   );
 }

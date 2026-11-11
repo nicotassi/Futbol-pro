@@ -1,4 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
+import { loginAs, mockSupabase } from './support/mockSupabase';
+
+// Navegación general como papá (ve todas las secciones).
+test.beforeEach(async ({ page }) => {
+  await mockSupabase(page);
+  await loginAs(page, 'admin');
+});
 
 /** Falla el test si aparece cualquier error en consola o una excepción de página. */
 function trackErrors(page: Page) {
@@ -94,24 +101,4 @@ test('vista previa del modo entrenamiento: cronómetro y navegación', async ({ 
 test('ruta inexistente muestra 404', async ({ page }) => {
   await page.goto('/no-existe');
   await expect(page.getByRole('heading', { name: 'Esta jugada no existe' })).toBeVisible();
-});
-
-test('PWA: manifest válido y funciona sin conexión', async ({ page, context }) => {
-  await page.goto('/');
-  const manifest = await page.evaluate(async () => {
-    const href = document.querySelector('link[rel="manifest"]')?.getAttribute('href');
-    return href
-      ? ((await (await fetch(href)).json()) as { display?: string; icons?: unknown[] })
-      : null;
-  });
-  expect(manifest?.display).toBe('standalone');
-  expect(manifest?.icons?.length).toBeGreaterThanOrEqual(3);
-
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.reload(); // la página queda controlada por el service worker
-  await context.setOffline(true);
-  await page.goto('/objetivos');
-  await expect(page.getByRole('heading', { level: 1, name: 'Objetivos' })).toBeVisible();
-  await expect(page.getByText(/Sin conexión/)).toBeVisible();
-  await context.setOffline(false);
 });

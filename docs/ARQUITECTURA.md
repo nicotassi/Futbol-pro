@@ -1,6 +1,6 @@
 # FUTBOLISTA PRO — Arquitectura técnica
 
-> Estado: **aprobada**. Decisiones abiertas resueltas (ver sección 14). Fase 1 implementada.
+> Estado: **aprobada**. Decisiones abiertas resueltas (ver sección 14). Fases 1 y 2 implementadas. El detalle del modelo y los permisos implementados está en `docs/PLAN_FASE_2.md` y en `supabase/migrations/`.
 > Documento de referencia: especificación funcional "Documento maestro v1.0".
 
 ---

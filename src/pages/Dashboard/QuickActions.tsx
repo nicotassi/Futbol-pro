@@ -8,6 +8,7 @@ interface QuickAction {
   description: string;
   icon: LucideIcon;
   featured?: boolean;
+  adminOnly?: boolean;
 }
 
 const quickActions: QuickAction[] = [
@@ -36,13 +37,20 @@ const quickActions: QuickAction[] = [
     description: 'Gráficos y tendencias',
     icon: Activity,
   },
-  { to: '/reloj', label: 'Subir captura del reloj', description: 'Análisis con IA', icon: Camera },
+  {
+    to: '/reloj',
+    label: 'Subir captura del reloj',
+    description: 'Análisis con IA',
+    icon: Camera,
+    adminOnly: true,
+  },
 ];
 
-export function QuickActions() {
+export function QuickActions({ isAdmin }: { isAdmin: boolean }) {
+  const visible = quickActions.filter((a) => isAdmin || !a.adminOnly);
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      {quickActions.map(({ to, label, description, icon: Icon, featured }) => (
+      {visible.map(({ to, label, description, icon: Icon, featured }) => (
         <li key={to} className={cn(featured && 'col-span-2 sm:col-span-1')}>
           <Link
             to={to}

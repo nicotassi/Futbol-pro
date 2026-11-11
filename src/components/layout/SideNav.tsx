@@ -2,13 +2,14 @@ import { NavLink } from 'react-router';
 import { CalendarDays, HeartPulse, Trophy, Watch } from 'lucide-react';
 import { mainNav, type NavItem } from '@/config/navigation';
 import { Wordmark } from '@/components/brand/Logo';
+import { useAuth } from '@/contexts/authContext';
 import { cn } from '@/utils/cn';
 
-const secondary: NavItem[] = [
+const secondary: (NavItem & { adminOnly?: boolean })[] = [
   { to: '/partidos', label: 'Partidos', icon: Trophy },
   { to: '/recuperacion', label: 'Recuperación', icon: HeartPulse },
   { to: '/calendario', label: 'Calendario', icon: CalendarDays },
-  { to: '/reloj', label: 'Registro del reloj', icon: Watch },
+  { to: '/reloj', label: 'Registro del reloj', icon: Watch, adminOnly: true },
 ];
 
 function Item({ to, label, icon: Icon, end }: NavItem) {
@@ -35,6 +36,7 @@ function Item({ to, label, icon: Icon, end }: NavItem) {
 
 /** Barra lateral para pantallas anchas (≥ 1024 px). */
 export function SideNav() {
+  const { isAdmin } = useAuth();
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-ink px-4 py-6 lg:flex">
       <Wordmark tone="dark" className="px-2" />
@@ -45,9 +47,11 @@ export function SideNav() {
       </nav>
       <p className="eyebrow mt-8 mb-2 px-3 text-fog/80">Registros</p>
       <nav aria-label="Secciones" className="flex flex-col gap-1">
-        {secondary.map((item) => (
-          <Item key={item.to} {...item} />
-        ))}
+        {secondary
+          .filter((item) => isAdmin || !item.adminOnly)
+          .map((item) => (
+            <Item key={item.to} {...item} />
+          ))}
       </nav>
       <p className="mt-auto px-3 text-[0.5625rem] tracking-[0.14em] whitespace-nowrap text-fog/80 uppercase">
         Entrená · Aprendé · Evolucioná
