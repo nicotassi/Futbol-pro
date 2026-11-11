@@ -90,3 +90,11 @@ describe('cola sin conexión', () => {
     expect((await listOutbox()).map((i) => i.id)).toEqual(['c1']);
   });
 });
+
+describe('instantánea de la cola', () => {
+  it('devuelve siempre la misma referencia mientras no cambia (evita renders infinitos)', async () => {
+    const { outboxSnapshot } = await import('./outbox');
+    __resetOutboxForTests();
+    expect(outboxSnapshot()).toBe(outboxSnapshot());
+  });
+});

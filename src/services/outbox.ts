@@ -60,8 +60,11 @@ export async function listOutbox(userId?: string): Promise<OutboxItem[]> {
   return userId ? items.filter((i) => i.userId === userId) : items;
 }
 
+const EMPTY: OutboxItem[] = [];
+
+/** Instantánea estable para useSyncExternalStore (misma referencia si no cambió). */
 export function outboxSnapshot(): OutboxItem[] {
-  return memory ?? [];
+  return memory ?? EMPTY;
 }
 
 const isNetworkError = (e: unknown) =>
