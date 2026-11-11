@@ -216,7 +216,8 @@ test('Benja hace un entrenamiento completo, lo retoma tras cerrar y lo registra'
   await page.getByRole('button', { name: 'Ver historial' }).click();
   await page.getByRole('button', { name: /Técnica y fuerza/ }).click();
   await expect(page.getByRole('dialog').getByText('6/10 · Exigente')).toBeVisible();
-  await expect(page.getByRole('dialog').getByText('Plancha')).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('Plancha', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
 
   await nav(page, 'Inicio');
   await expect(page.getByText('18').first()).toBeVisible();

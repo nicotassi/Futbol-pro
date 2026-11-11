@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoadingState } from '@/components/feedback/LoadingState';
+import { RouteError } from '@/components/feedback/RouteError';
 import DashboardPage from '@/pages/Dashboard/DashboardPage';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { RequireAdmin } from '@/features/auth/RequireAdmin';
@@ -53,6 +54,7 @@ export const routes = [
         <AppShell />
       </RequireAuth>
     ),
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'entrenar', element: page(<TrainingPage />) },
@@ -121,6 +123,7 @@ export const routes = [
   {
     path: 'entrenar/sesion/:sessionId',
     element: <RequireAuth>{page(<TrainingModePage />)}</RequireAuth>,
+    errorElement: <RouteError />,
   },
 ];
 

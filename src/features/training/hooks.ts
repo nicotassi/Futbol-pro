@@ -25,6 +25,8 @@ export function useFavorites() {
     queryKey: trainingKeys.favorites(user?.id ?? ''),
     queryFn: () => fetchFavorites(user!.id),
     enabled: Boolean(user),
+    // Siempre se refresca al abrir: la copia guardada puede ser anterior al último cambio.
+    refetchOnMount: 'always',
   });
 }
 
@@ -57,6 +59,7 @@ export function useSessions() {
   const query = useQuery({
     queryKey: trainingKeys.sessions(player.id),
     queryFn: () => fetchSessions(player.id),
+    refetchOnMount: 'always',
   });
   const data = useMemo<SessionView[] | undefined>(() => {
     if (!query.data && pending.length === 0) return undefined;

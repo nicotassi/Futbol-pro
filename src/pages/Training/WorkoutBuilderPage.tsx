@@ -178,11 +178,7 @@ function WorkoutBuilder({
       <TopBar title={id ? 'Editar entrenamiento' : 'Nuevo entrenamiento'} backTo="/entrenar" />
       <PageHeader
         title={
-          id
-            ? 'Editar entrenamiento'
-            : duplicate
-              ? 'Duplicar entrenamiento'
-              : 'Nuevo entrenamiento'
+          id ? 'Editar entrenamiento' : duplicate ? 'Duplicar entrenamiento' : 'Nuevo entrenamiento'
         }
       />
 

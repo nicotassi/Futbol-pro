@@ -65,7 +65,7 @@ Supabase pide aprobación manual para las operaciones que borran filas, y esa ap
 | ----------------------------------------------------------------------------------------------------------- | ---------- |
 | Base de datos: 103 verificaciones (RLS, `save_workout`, `finish_session`, idempotencia, biblioteca inicial) | ✅         |
 | 50 tests unitarios (cola sin conexión, lógica del modo entrenamiento, validaciones)                         | ✅         |
-| Tests e2e del flujo completo en Android y escritorio                                                        | ver commit |
+| Tests e2e: 58 (29 escenarios × Android y escritorio)                                                        | ✅         |
 | Migración aplicada en Supabase                                                                              | ✅         |
 
 ## Pendiente (Fase 4)
