@@ -20,14 +20,16 @@ insert into ids values ('w1', public.save_workout(
   jsonb_build_array(
     jsonb_build_object('exercise_id', (select v from ids where k = 'ex1'), 'duration_sec', '480'),
     jsonb_build_object('exercise_id', (select v from ids where k = 'ex2'), 'sets', '3', 'duration_sec', '30', 'rest_sec', '30'))));
-select tests.ok((select count(*) = 2 from public.workout_items where template_id = (select v from ids where k = 'w1')), 'papá guarda un entrenamiento con sus ejercicios');
+select tests.ok((select count(*) = 2 from public.workout_items where template_id = (select v from ids where k = 'w1') and not removed), 'papá guarda un entrenamiento con sus ejercicios');
 select tests.ok((select exercise_id = (select v from ids where k = 'ex2') from public.workout_items where template_id = (select v from ids where k = 'w1') and position = 1), 'el orden de los ejercicios se respeta');
 
+-- Volver a agregar un segundo ejercicio reutiliza la posición marcada
 -- Reordenar: guardar de nuevo con otro orden y un ejercicio menos
 select public.save_workout(
   jsonb_build_object('id', (select v from ids where k = 'w1'), 'player_id', '10000000-0000-0000-0000-000000000001', 'name', 'Solo plancha', 'is_template', true),
   jsonb_build_array(jsonb_build_object('exercise_id', (select v from ids where k = 'ex2'), 'sets', '2')));
-select tests.ok((select count(*) = 1 from public.workout_items where template_id = (select v from ids where k = 'w1')), 'editar reemplaza los ejercicios del entrenamiento');
+select tests.ok((select count(*) = 1 from public.workout_items where template_id = (select v from ids where k = 'w1') and not removed), 'editar reemplaza los ejercicios del entrenamiento');
+select tests.ok((select count(*) = 2 from public.workout_items where template_id = (select v from ids where k = 'w1')), 'el ejercicio quitado se conserva marcado (nada se borra)');
 select tests.ok((select name = 'Solo plancha' from public.workout_templates where id = (select v from ids where k = 'w1')), 'editar actualiza los datos del entrenamiento');
 select tests.throws($$select public.save_workout(jsonb_build_object('player_id', '10000000-0000-0000-0000-000000000001', 'name', 'Vacío'), '[]'::jsonb)$$, '23514', 'un entrenamiento sin ejercicios se rechaza');
 select tests.throws($$select public.save_workout(jsonb_build_object('player_id', '10000000-0000-0000-0000-000000000001', 'name', 'Ajeno'), jsonb_build_array(jsonb_build_object('exercise_id', (select v from ids where k = 'exOtro'))))$$, '23503', 'no se pueden usar ejercicios de otra familia');
@@ -43,7 +45,7 @@ insert into ids values ('client', '99999999-0000-0000-0000-000000000001');
 insert into ids values ('s1', public.finish_session(
   jsonb_build_object('player_id', '10000000-0000-0000-0000-000000000001', 'template_id', (select v from ids where k = 'w1'), 'title', 'Solo plancha',
     'started_at', now() - interval '25 minutes', 'ended_at', now(), 'actual_minutes', '25', 'rpe', '6', 'post_state', '4', 'client_id', (select v from ids where k = 'client')),
-  jsonb_build_array(jsonb_build_object('workout_item_id', (select id from public.workout_items where template_id = (select v from ids where k = 'w1') limit 1), 'exercise_id', (select v from ids where k = 'ex2'), 'completed', true, 'sets_done', '2'))));
+  jsonb_build_array(jsonb_build_object('workout_item_id', (select id from public.workout_items where template_id = (select v from ids where k = 'w1') and not removed limit 1), 'exercise_id', (select v from ids where k = 'ex2'), 'completed', true, 'sets_done', '2'))));
 select tests.ok((select status = 'completed' and rpe = 6 and created_by = '00000000-0000-0000-0000-00000000000b' from public.workout_sessions where id = (select v from ids where k = 's1')), 'el jugador registra una sesión completa');
 select tests.ok((select count(*) = 1 from public.session_results where session_id = (select v from ids where k = 's1')), 'la sesión guarda los resultados por ejercicio');
 
@@ -53,7 +55,7 @@ select public.finish_session(
   jsonb_build_array(jsonb_build_object('exercise_id', (select v from ids where k = 'ex2'), 'completed', true)));
 select tests.ok((select count(*) = 1 from public.workout_sessions where client_id = (select v from ids where k = 'client')), 'reenviar la misma sesión no la duplica');
 select tests.ok((select actual_minutes = 26 and rpe = 7 from public.workout_sessions where client_id = (select v from ids where k = 'client')), 'el reenvío actualiza los datos');
-select tests.ok((select count(*) = 1 from public.session_results where session_id = (select v from ids where k = 's1')), 'el reenvío no duplica resultados');
+select tests.ok((select count(*) = 1 from public.session_results where session_id = (select v from ids where k = 's1') and not removed), 'el reenvío no duplica resultados');
 
 -- Sesión libre (sin plantilla)
 select public.finish_session(jsonb_build_object('player_id', '10000000-0000-0000-0000-000000000001', 'title', 'Fútbol en la plaza', 'started_at', now() - interval '1 hour', 'actual_minutes', '45', 'client_id', gen_random_uuid()), '[]'::jsonb);
@@ -66,4 +68,13 @@ reset role;
 select tests.login('00000000-0000-0000-0000-00000000000c');
 set role authenticated;
 select tests.throws($$select public.finish_session(jsonb_build_object('player_id', '10000000-0000-0000-0000-000000000002', 'title', 'Pisar', 'started_at', now(), 'client_id', '99999999-0000-0000-0000-000000000001'), '[]'::jsonb)$$, '42501', 'no se puede sobrescribir la sesión de otra familia');
+reset role;
+
+-- Papá vuelve a agregar un ejercicio en una posición que estaba marcada como quitada
+select tests.login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select public.save_workout(
+  jsonb_build_object('id', (select v from ids where k = 'w1'), 'player_id', '10000000-0000-0000-0000-000000000001', 'name', 'De nuevo dos', 'is_template', true),
+  jsonb_build_array(jsonb_build_object('exercise_id', (select v from ids where k = 'ex1')), jsonb_build_object('exercise_id', (select v from ids where k = 'ex2'))));
+select tests.ok((select count(*) = 2 from public.workout_items where template_id = (select v from ids where k = 'w1') and not removed), 'una posición quitada se reutiliza al volver a agregar');
 reset role;

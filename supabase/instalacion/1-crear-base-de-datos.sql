@@ -1010,12 +1010,16 @@ $$;
 -- * finish_session(): registra una sesión realizada con sus resultados.
 --   Idempotente por client_id → los reintentos sin conexión no duplican.
 -- * Biblioteca inicial: cada jugador nuevo recibe 30 ejercicios base.
+--
+-- Diseño "solo agregar/actualizar": al editar no se borran filas; las que
+-- sobran quedan marcadas con removed = true (y la app las ignora). Así se
+-- conserva el historial y ninguna operación es destructiva.
 -- =============================================================================
 
--- El jugador puede corregir los resultados de sus propias sesiones
--- (finish_session los reemplaza al reintentar).
-alter policy session_results_delete on public.session_results
-  using (private.is_member(player_id));
+alter table public.workout_items  add column removed boolean not null default false;
+alter table public.session_results add column removed boolean not null default false;
+comment on column public.workout_items.removed is 'true = quitado del entrenamiento al editarlo (se conserva, la app lo ignora).';
+comment on column public.session_results.removed is 'true = reemplazado al reenviar la sesión (se conserva, la app lo ignora).';
 
 -- -----------------------------------------------------------------------------
 -- Guardar entrenamiento (plantilla o programado) con sus ejercicios
@@ -1029,10 +1033,15 @@ as $$
 declare
   v_id uuid := nullif(p_workout ->> 'id', '')::uuid;
   v_player uuid := (p_workout ->> 'player_id')::uuid;
+  v_item jsonb;
+  v_ord bigint;
+  v_pos smallint;
+  v_count int;
 begin
   if jsonb_typeof(p_items) is distinct from 'array' or jsonb_array_length(p_items) = 0 then
     raise exception 'El entrenamiento necesita al menos un ejercicio.' using errcode = '23514';
   end if;
+  v_count := jsonb_array_length(p_items);
 
   if v_id is null then
     insert into public.workout_templates (player_id, name, objective, notes, est_minutes, is_template, scheduled_for)
@@ -1058,21 +1067,38 @@ begin
     if not found then
       raise exception 'Entrenamiento no encontrado o sin permiso.' using errcode = '42501';
     end if;
-    delete from public.workout_items where template_id = v_id;
   end if;
 
-  insert into public.workout_items (template_id, player_id, exercise_id, position, sets, reps, duration_sec, rest_sec, instructions)
-  select
-    v_id,
-    v_player,
-    (item ->> 'exercise_id')::uuid,
-    (ord - 1)::smallint,
-    nullif(item ->> 'sets', '')::smallint,
-    nullif(item ->> 'reps', '')::smallint,
-    nullif(item ->> 'duration_sec', '')::integer,
-    nullif(item ->> 'rest_sec', '')::integer,
-    nullif(item ->> 'instructions', '')
-  from jsonb_array_elements(p_items) with ordinality as t(item, ord);
+  -- Cada posición se actualiza si ya existía o se agrega si es nueva.
+  for v_item, v_ord in
+    select t.item, t.ord from jsonb_array_elements(p_items) with ordinality as t(item, ord)
+  loop
+    v_pos := (v_ord - 1)::smallint;
+    update public.workout_items set
+      exercise_id = (v_item ->> 'exercise_id')::uuid,
+      sets = nullif(v_item ->> 'sets', '')::smallint,
+      reps = nullif(v_item ->> 'reps', '')::smallint,
+      duration_sec = nullif(v_item ->> 'duration_sec', '')::integer,
+      rest_sec = nullif(v_item ->> 'rest_sec', '')::integer,
+      instructions = nullif(v_item ->> 'instructions', ''),
+      removed = false
+    where template_id = v_id and position = v_pos;
+    if not found then
+      insert into public.workout_items (template_id, player_id, exercise_id, position, sets, reps, duration_sec, rest_sec, instructions)
+      values (
+        v_id, v_player, (v_item ->> 'exercise_id')::uuid, v_pos,
+        nullif(v_item ->> 'sets', '')::smallint,
+        nullif(v_item ->> 'reps', '')::smallint,
+        nullif(v_item ->> 'duration_sec', '')::integer,
+        nullif(v_item ->> 'rest_sec', '')::integer,
+        nullif(v_item ->> 'instructions', '')
+      );
+    end if;
+  end loop;
+
+  -- Las posiciones que sobran (se quitaron ejercicios) quedan marcadas.
+  update public.workout_items set removed = true
+  where template_id = v_id and position >= v_count and not removed;
 
   return v_id;
 end;
@@ -1121,7 +1147,8 @@ begin
     raise exception 'Sesión no encontrada o sin permiso.' using errcode = '42501';
   end if;
 
-  delete from public.session_results where session_id = v_id;
+  -- Un reenvío reemplaza los resultados anteriores (quedan marcados).
+  update public.session_results set removed = true where session_id = v_id and not removed;
 
   if jsonb_typeof(p_results) = 'array' then
     insert into public.session_results (session_id, player_id, workout_item_id, exercise_id, completed, sets_done, reps_done, notes)
