@@ -7,6 +7,7 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 import { RequireAdmin } from '@/features/auth/RequireAdmin';
 
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const SetupPage = lazy(() => import('@/features/auth/SetupPage'));
 
 // Pantallas secundarias en chunks separados: el inicio carga más rápido en el celular.
 const TrainingPage = lazy(() => import('@/pages/Training/TrainingPage'));
@@ -40,6 +41,7 @@ const page = (node: ReactNode) => (
 
 export const routes = [
   { path: 'ingresar', element: page(<LoginPage />) },
+  { path: 'configuracion', element: page(<SetupPage />) },
   {
     element: (
       <RequireAuth>
@@ -83,4 +85,7 @@ export const routes = [
   },
 ];
 
-export const router = createBrowserRouter(routes);
+// BASE_URL = '/' en desarrollo y '/Futbol-pro/' en GitHub Pages.
+export const router = createBrowserRouter(routes, {
+  basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/',
+});

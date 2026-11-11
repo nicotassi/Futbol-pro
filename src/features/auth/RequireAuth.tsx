@@ -19,15 +19,16 @@ function CenteredMessage({ children }: { children: ReactNode }) {
 
 /** Protege rutas: exige sesión iniciada y un jugador vinculado. */
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { status, error, retry, signOut } = useAuth();
+  const { status, error, retry, signOut, signedOutManually } = useAuth();
   const location = useLocation();
 
   if (status === 'loading') return <SplashScreen />;
 
   if (status === 'signed-out') {
-    return (
-      <Navigate to="/ingresar" replace state={{ from: location.pathname + location.search }} />
-    );
+    // Tras un cierre de sesión manual no se recuerda la pantalla anterior
+    // (el próximo usuario puede ser otra persona).
+    const state = signedOutManually ? undefined : { from: location.pathname + location.search };
+    return <Navigate to="/ingresar" replace state={state} />;
   }
 
   if (status === 'error') {

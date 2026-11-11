@@ -11,6 +11,7 @@ import { AuthContext, type AuthState, type AuthStatus } from './authContext';
 export function AuthProvider({ children }: { children: ReactNode }) {
   // undefined = todavía leyendo la sesión guardada
   const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [signedOutManually, setSignedOutManually] = useState(false);
 
   useEffect(() => {
     const client = db();
@@ -46,11 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!parsed.ok) return { error: parsed.error };
     if (!password) return { error: 'Ingresá la contraseña.' };
     const { error } = await db().auth.signInWithPassword({ email: parsed.email, password });
+    if (!error) setSignedOutManually(false);
     return { error: error ? friendlyError(error) : null };
   }, []);
 
   const signOut = useCallback(async () => {
     // Privacidad: en un dispositivo compartido no queda nada guardado.
+    setSignedOutManually(true);
     await clearQueryCache();
     await db().auth.signOut({ scope: 'local' });
     setSession(null);
@@ -78,12 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       player: membership?.player ?? null,
       role: membership?.role ?? null,
       isAdmin: membership?.role === 'admin',
+      signedOutManually,
       error: membershipsQuery.error ?? profileQuery.error,
       signIn,
       signOut,
       retry,
     };
   }, [
+    signedOutManually,
     session,
     profileQuery.data,
     profileQuery.isError,

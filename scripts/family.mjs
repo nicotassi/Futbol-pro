@@ -113,6 +113,7 @@ async function ensureUser(supabase, { email, password, displayName, username }) 
     email,
     password,
     email_confirm: true,
+    app_metadata: { fp_invited: true },
     user_metadata: { display_name: displayName, ...(username ? { username } : {}) },
   });
   if (error) throw error;

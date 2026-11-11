@@ -24,6 +24,7 @@ import { useAuth, usePlayer } from '@/contexts/authContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { fetchPlayerAccess, playerKeys } from '@/features/players/api';
 import { PlayerEditSheet } from '@/features/players/PlayerEditSheet';
+import { PlayerAccountCard } from '@/features/players/PlayerAccountCard';
 import { friendlyError } from '@/services/errors';
 import type { DevelopmentPhase } from '@/types/domain';
 
@@ -107,10 +108,11 @@ export default function AdministrationPage() {
             </ul>
           )}
         </Card>
-        <p className="mt-2 text-xs text-muted">
-          Las cuentas y contraseñas se administran con el script <code>npm run family</code> (ver
-          README).
-        </p>
+        {access.data && (
+          <div className="mt-3">
+            <PlayerAccountCard player={player} access={access.data} />
+          </div>
+        )}
       </Section>
 
       <Section title="Próximamente">

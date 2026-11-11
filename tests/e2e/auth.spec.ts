@@ -60,7 +60,7 @@ test.describe('Benja (jugador)', () => {
 
   test('ve su perfil sin opción de editarlo', async ({ page }) => {
     await page.goto('/perfil');
-    await expect(page.getByText('Usuario: benja')).toBeVisible();
+    await expect(page.getByText('Usuario: benja').first()).toBeVisible();
     await expect(page.getByText('Jugador', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Editar' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Administración' })).toHaveCount(0);
@@ -94,7 +94,7 @@ test.describe('Papá (administrador)', () => {
     await page.goto('/admin');
     await expect(page.getByRole('heading', { level: 1, name: 'Administración' })).toBeVisible();
     await expect(page.getByText('Nico (vos)')).toBeVisible();
-    await expect(page.getByText('Usuario: benja')).toBeVisible();
+    await expect(page.getByText('Usuario: benja').first()).toBeVisible();
   });
 
   test('edita el perfil del jugador con validación', async ({ page }) => {

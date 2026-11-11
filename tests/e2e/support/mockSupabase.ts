@@ -31,7 +31,7 @@ export const accounts = {
     login: 'Benja',
   },
 };
-type Account = (typeof accounts)[keyof typeof accounts];
+type Account = Omit<(typeof accounts)['admin'], 'role'> & { role: 'admin' | 'player' };
 
 const now = new Date().toISOString();
 
@@ -78,14 +78,30 @@ function authUser(user: Account) {
   };
 }
 
-export async function mockSupabase(page: Page) {
+export const SETUP_CODE = 'ABCD-EFGH';
+
+interface MockOptions {
+  /** false = app recién instalada: no hay cuentas (se usa la configuración inicial). */
+  configured?: boolean;
+  /** false = papá todavía no creó la cuenta del jugador. */
+  playerAccount?: boolean;
+}
+
+export async function mockSupabase(page: Page, options: MockOptions = {}) {
+  const { configured = true, playerAccount = true } = options;
   const state = {
     player: makePlayer(),
     patches: [] as unknown[],
     serverDown: false,
     requestsWhileDown: 0,
+    codeUsed: false,
   };
-  const all = Object.values(accounts);
+  // Copias mutables de las cuentas existentes en esta simulación.
+  const all: Account[] = configured
+    ? Object.values(accounts)
+        .filter((a) => playerAccount || a.role !== 'player')
+        .map((a) => ({ ...a }))
+    : [];
 
   const requester = (route: Route): Account | undefined => {
     const auth = route.request().headers()['authorization'] ?? '';
@@ -139,7 +155,9 @@ export async function mockSupabase(page: Page) {
         refresh_token?: string;
       };
       if (url.searchParams.get('grant_type') === 'password') {
-        const user = all.find((a) => a.email === body.email && a.password === body.password);
+        const user = all.find(
+          (a) => a.email === body.email?.toLowerCase() && a.password === body.password,
+        );
         if (!user) {
           return json(route, 400, {
             code: 400,
@@ -160,6 +178,70 @@ export async function mockSupabase(page: Page) {
     }
     if (url.pathname === '/auth/v1/logout') {
       return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*' } });
+    }
+
+    // ------------------------------------------------- Edge Function de cuentas
+    if (url.pathname === '/functions/v1/family-accounts') {
+      const body = req.postDataJSON() as Record<string, string>;
+      const caller = requester(route);
+      switch (body.action) {
+        case 'status':
+          return json(route, 200, { ok: true, configured: all.some((a) => a.role === 'admin') });
+        case 'bootstrap': {
+          if (all.some((a) => a.role === 'admin'))
+            return json(route, 409, {
+              ok: false,
+              error: 'La app ya está configurada. Ingresá con tu cuenta.',
+            });
+          if (state.codeUsed || body.code?.toUpperCase() !== SETUP_CODE) {
+            return json(route, 403, {
+              ok: false,
+              error: 'El código de instalación no es válido, ya se usó o venció.',
+            });
+          }
+          state.codeUsed = true;
+          state.player.first_name = body.playerName ?? 'Benja';
+          all.push({
+            ...accounts.admin,
+            email: body.email!.toLowerCase(),
+            password: body.password!,
+            display_name: body.adminName!,
+            login: body.email!,
+          });
+          return json(route, 200, { ok: true });
+        }
+        case 'create-player-account': {
+          if (caller?.role !== 'admin')
+            return json(route, 403, {
+              ok: false,
+              error: 'Solo papá puede crear la cuenta del jugador.',
+            });
+          if (all.some((a) => a.role === 'player'))
+            return json(route, 409, { ok: false, error: 'El jugador ya tiene una cuenta.' });
+          all.push({
+            ...accounts.player,
+            username: body.username!,
+            email: `${body.username}@jugador.futbolista-pro.app`,
+            password: body.password!,
+            login: body.username!,
+          });
+          return json(route, 200, { ok: true, username: body.username });
+        }
+        case 'reset-player-password': {
+          if (caller?.role !== 'admin')
+            return json(route, 403, {
+              ok: false,
+              error: 'Solo papá puede cambiar la contraseña del jugador.',
+            });
+          const p = all.find((a) => a.role === 'player');
+          if (!p)
+            return json(route, 404, { ok: false, error: 'El jugador todavía no tiene cuenta.' });
+          p.password = body.password!;
+          return json(route, 200, { ok: true });
+        }
+        default:
+          return json(route, 400, { ok: false, error: 'Acción desconocida.' });
+      }
     }
 
     // ---------------------------------------------------------------- REST

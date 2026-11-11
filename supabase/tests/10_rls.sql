@@ -7,11 +7,11 @@
 -- Utilidades de prueba
 -- ---------------------------------------------------------------------------
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create table tests.results (n serial, name text, ok boolean);
-grant insert, select on tests.results to anon, authenticated;
-grant usage on sequence tests.results_n_seq to anon, authenticated;
+grant insert, select on tests.results to anon, authenticated, service_role;
+grant usage on sequence tests.results_n_seq to anon, authenticated, service_role;
 
 create function tests.ok(cond boolean, name text) returns void language plpgsql as $$
 begin
@@ -45,7 +45,7 @@ begin
   return n;
 end $$;
 
-grant execute on all functions in schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- Actuar como un usuario (equivale al JWT que envía la app).
 create function tests.login(p_user uuid) returns void language sql as $$
@@ -56,13 +56,20 @@ grant execute on function tests.login(uuid) to authenticated;
 -- ---------------------------------------------------------------------------
 -- Datos de prueba: dos familias independientes
 -- ---------------------------------------------------------------------------
-insert into auth.users (id, email, raw_user_meta_data) values
-  ('00000000-0000-0000-0000-00000000000a', 'papa@example.com',  '{"display_name":"Papá"}'),
-  ('00000000-0000-0000-0000-00000000000b', 'benja@jugador.futbolista-pro.app', '{"display_name":"Benja","username":"Benja"}'),
-  ('00000000-0000-0000-0000-00000000000c', 'otro.papa@example.com', '{"display_name":"Otro papá"}'),
-  ('00000000-0000-0000-0000-00000000000d', 'otro@jugador.futbolista-pro.app', '{"username":"otro"}');
+insert into public.account_invites (email) values
+  ('papa@example.com'), ('benja@jugador.futbolista-pro.app'), ('otro.papa@example.com'), ('otro@jugador.futbolista-pro.app');
+insert into auth.users (id, email, raw_app_meta_data, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-00000000000a', 'papa@example.com', '{"fp_invited":true}', '{"display_name":"Papá"}'),
+  ('00000000-0000-0000-0000-00000000000b', 'benja@jugador.futbolista-pro.app', '{"fp_invited":true}', '{"display_name":"Benja","username":"Benja"}'),
+  ('00000000-0000-0000-0000-00000000000c', 'otro.papa@example.com', '{"fp_invited":true}', '{"display_name":"Otro papá"}'),
+  ('00000000-0000-0000-0000-00000000000d', 'otro@jugador.futbolista-pro.app', '{"fp_invited":true}', '{"username":"otro"}');
 
 select tests.ok((select count(*) = 4 from public.profiles), 'se crea un perfil por cada usuario de Auth');
+select tests.throws($$insert into auth.users (email) values ('intruso@example.com')$$, '42501', 'el registro público está cerrado (sin invitación no se crea la cuenta)');
+select tests.ok((select count(*) = 0 from public.account_invites), 'cada invitación se consume al crear la cuenta');
+insert into public.account_invites (email, expires_at) values ('tarde@example.com', now() - interval '1 second');
+select tests.throws($$insert into auth.users (email) values ('tarde@example.com')$$, '42501', 'una invitación vencida no sirve');
+delete from public.account_invites;
 select tests.ok((select username::text = 'benja' from public.profiles where id = '00000000-0000-0000-0000-00000000000b'), 'el usuario se guarda en minúsculas');
 select tests.ok((select display_name = 'otro' from public.profiles where id = '00000000-0000-0000-0000-00000000000d'), 'sin nombre visible se usa la parte local del email');
 

@@ -17,6 +17,8 @@ export interface AuthState {
   player: Player | null;
   role: AppRole | null;
   isAdmin: boolean;
+  /** true si la sesión se cerró a mano (el próximo ingreso arranca en Inicio). */
+  signedOutManually: boolean;
   error: unknown;
   signIn: (identifier: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;

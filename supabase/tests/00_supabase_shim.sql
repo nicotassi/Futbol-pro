@@ -51,3 +51,8 @@ grant select, insert, update, delete on storage.objects to authenticated;
 grant all on storage.objects, storage.buckets to service_role;
 
 grant usage on schema public to anon, authenticated, service_role;
+
+-- En Supabase, pgcrypto vive en el esquema "extensions".
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
+grant usage on schema extensions to anon, authenticated, service_role;

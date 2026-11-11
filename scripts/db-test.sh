@@ -48,28 +48,4 @@ DB2="${DB}_guided"
 "${PSQL[@]}" -d "$DB2" -f "$ROOT/supabase/tests/00_supabase_shim.sql"
 "${PSQL[@]}" -d "$DB2" -o /dev/null -f "$BUNDLE"
 
-# Cuentas creadas desde el panel de Supabase (sin metadatos).
-"${PSQL[@]}" -d "$DB2" -c "insert into auth.users (email) values ('papa@example.com'), ('benja@jugador.futbolista-pro.app')"
-
-LINK="$(sed -e "s/'tu-email@ejemplo.com'/'Papa@Example.com'/" -e "s/'Papá';/'Nico';/" "$ROOT/supabase/instalacion/2-vincular-familia.sql")"
-for run in 1 2; do  # dos veces: debe ser idempotente
-  echo "$LINK" | "${PSQL[@]}" -d "$DB2" -o /dev/null
-done
-
-RESULT="$("${PSQL[@]}" -d "$DB2" -At -c "
-  select (select count(*) from public.players)
-    || '|' || (select count(*) from public.player_access)
-    || '|' || (select string_agg(display_name || ':' || coalesce(username, '-'), ',' order by display_name) from public.profiles)")"
-if [ "$RESULT" != "1|2|Benja:benja,Nico:-" ]; then
-  echo "✗ La vinculación guiada no dio el resultado esperado: $RESULT" >&2
-  exit 1
-fi
-
-# Error claro si falta una cuenta.
-if echo "$LINK" | sed "s/'Papa@Example.com'/'nadie@example.com'/" | "${PSQL[@]}" -d "$DB2" -o /dev/null 2>"$ROOT/.db-test-err"; then
-  echo "✗ Debía fallar con una cuenta inexistente" >&2; exit 1
-fi
-grep -q "No encontré la cuenta" "$ROOT/.db-test-err" || { cat "$ROOT/.db-test-err" >&2; exit 1; }
-rm -f "$ROOT/.db-test-err"
-
-echo "✓ Instalación guiada verificada (archivo único + vinculación idempotente)"
+echo "✓ Instalación en un solo archivo verificada"

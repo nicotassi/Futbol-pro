@@ -5,7 +5,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import pkg from './package.json' with { type: 'json' };
 
+// En GitHub Pages la app vive en /Futbol-pro/ (BASE_PATH lo define el script de publicación).
+const base = process.env.BASE_PATH ?? '/';
+
 export default defineConfig({
+  base,
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [
     react(),
@@ -15,13 +19,13 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['icons/favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
-        id: '/',
+        id: base,
         name: 'Futbolista Pro',
         short_name: 'Futbolista Pro',
         description: 'Entrená. Aprendé. Evolucioná.',
         lang: 'es-AR',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#FAF8F4',
@@ -42,7 +46,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // Solo se precachean las fuentes con caracteres latinos (español).
         globIgnores: ['**/*cyrillic*', '**/*greek*', '**/*vietnamese*'],
-        navigateFallback: '/index.html',
+        navigateFallback: `${base}index.html`,
         cleanupOutdatedCaches: true,
       },
     }),

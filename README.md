@@ -63,53 +63,12 @@ El catálogo visual de componentes está en `/_design`. Solo existe en modo desa
 
 4. Con la app abierta una vez, activá el modo avión: la app sigue abriendo y muestra el aviso "Sin conexión".
 
-## Fase 2: poner en marcha Supabase (una sola vez)
+## Publicación y base de datos
 
-> **¿No programás?** Seguí la guía **[docs/GUIA_PUESTA_EN_MARCHA.md](docs/GUIA_PUESTA_EN_MARCHA.md)**: todo desde el navegador, copiando y pegando, sin terminal.
-
-Alternativa para desarrolladores (con terminal):
-
-1. **Crear el proyecto.** En [supabase.com](https://supabase.com) creá una cuenta gratuita y un proyecto nuevo:
-   - Nombre: `futbolista-pro`.
-   - Región: **South America (São Paulo)**.
-   - Guardá la contraseña de la base en un lugar seguro.
-2. **Desactivar el registro público.** En Authentication → Sign In / Providers, desactivá **"Allow new users to sign up"**. Las cuentas las crea el script del paso 5.
-3. **Crear las tablas y la seguridad:**
-   ```bash
-   npx supabase login
-   npm run db:link        # elegí el proyecto futbolista-pro
-   npm run db:push        # aplica supabase/migrations
-   ```
-4. **Conectar la app.** Creá `.env.local` con los datos de Project Settings → API Keys:
-   ```
-   VITE_SUPABASE_URL=https://<proyecto>.supabase.co
-   VITE_SUPABASE_PUBLISHABLE_KEY=<clave publicable>
-   ```
-5. **Crear las cuentas.** Creá `.env.server.local` (nunca se sube al repositorio) con:
-   ```
-   SUPABASE_URL=https://<proyecto>.supabase.co
-   SUPABASE_SECRET_KEY=<clave secreta>
-   ```
-   Después ejecutá:
-   ```bash
-   npm run family -- setup      # pide tu email, contraseña y el usuario y contraseña de Benja
-   ```
-6. `npm run dev` → ingresá con tu email. Benja ingresa con su usuario, por ejemplo `benja`.
-
-### Mantenimiento de cuentas
-
-```bash
-npm run family -- password benja   # cambiar la contraseña de Benja
-npm run family -- status           # ver jugadores y accesos
-```
-
-### Lista de verificación con el proyecto real
-
-- [ ] Papá ingresa y ve "Seguimiento de Benja" en Inicio y la sección Administración.
-- [ ] Papá edita el perfil del jugador (fecha de nacimiento, club) y, al recargar, los cambios siguen ahí.
-- [ ] Benja ingresa con su usuario, ve su nombre y edad, y **no** ve Administración ni Registro del reloj.
-- [ ] Cerrar sesión vuelve a la pantalla de ingreso.
-- [ ] Con la app abierta una vez, en modo avión vuelve a abrir mostrando los datos.
+- **App publicada:** https://nicotassi.github.io/Futbol-pro/ (GitHub Pages, rama `gh-pages`; se publica con `scripts/deploy-pages.sh`).
+- **Base de datos:** Supabase, proyecto "Futbol-pro". Las migraciones de `supabase/migrations/` y la Edge Function `family-accounts` se aplican con el conector de Supabase.
+- **Cuentas:** se crean desde la app. Papá usa un código de instalación de un solo uso y después crea la cuenta del jugador en Administración. El registro público está cerrado en la base: sin una invitación de la Edge Function, la cuenta se rechaza.
+- Guía para la familia: [docs/GUIA_PUESTA_EN_MARCHA.md](docs/GUIA_PUESTA_EN_MARCHA.md).
 
 ## Configuración y secretos
 
