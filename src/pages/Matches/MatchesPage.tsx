@@ -1,4 +1,6 @@
-import { Plus, Sparkles, Trophy } from 'lucide-react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Trophy } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Section } from '@/components/layout/Section';
@@ -6,19 +8,26 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { StatTile } from '@/components/ui/StatTile';
 import { EmptyState } from '@/components/feedback/EmptyState';
-import { PhaseNotice } from '@/components/feedback/PhaseNotice';
+import { ErrorState } from '@/components/feedback/ErrorState';
+import { LoadingState } from '@/components/feedback/LoadingState';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-const reflection = [
-  '¿Cómo me sentí físicamente?',
-  '¿Cómo estuvo mi concentración?',
-  '¿Tomé buenas decisiones?',
-  '¿Me ofrecí para recibir la pelota?',
-  '¿Ayudé al equipo a recuperar?',
-];
+import { usePlayer } from '@/contexts/authContext';
+import { friendlyError } from '@/services/errors';
+import { matchKeys } from '@/features/matches/api';
+import { useMatches, type MatchView } from '@/features/matches/hooks';
+import { MatchList } from '@/features/matches/MatchList';
+import { MatchSheet } from '@/features/matches/MatchSheet';
+import { seasonSummary } from '@/features/matches/stats';
 
 export default function MatchesPage() {
   useDocumentTitle('Partidos');
+  const player = usePlayer();
+  const queryClient = useQueryClient();
+  const matches = useMatches();
+  const [sheet, setSheet] = useState<{ match: MatchView | null } | null>(null);
+  const summary = seasonSummary(matches.data ?? []);
+  const has = Boolean(matches.data);
+
   return (
     <>
       <TopBar title="Partidos" />
@@ -26,50 +35,67 @@ export default function MatchesPage() {
         title="Partidos"
         description="Resultados, estadísticas individuales y reflexión personal."
         action={
-          <Button size="sm" disabled leadingIcon={<Plus className="size-4" />}>
+          <Button
+            size="sm"
+            onClick={() => setSheet({ match: null })}
+            leadingIcon={<Plus className="size-4" />}
+          >
             Registrar
           </Button>
         }
       />
-      <PhaseNotice phase={4} feature="El registro de partidos" />
 
       <Section title="Temporada">
         <div className="grid grid-cols-3 gap-3">
-          <StatTile label="Partidos" value={null} />
-          <StatTile label="Goles" value={null} />
-          <StatTile label="Asistencias" value={null} />
+          <StatTile label="Partidos" value={has && summary.matches > 0 ? summary.matches : null} />
+          <StatTile label="Goles" value={summary.goals} />
+          <StatTile label="Asistencias" value={summary.assists} />
+          <StatTile label="Minutos" value={summary.minutes} />
+          <StatTile label="Pases buenos" value={summary.passAccuracy} unit="%" />
+          <StatTile label="Mi evaluación" value={summary.avgRating} unit="/5" />
         </div>
+        <p className="mt-2 text-xs text-muted">
+          Solo se suma lo que se registró. Lo que no se cargó queda en blanco, no cuenta como cero.
+        </p>
       </Section>
 
       <Section title="Últimos partidos">
-        <Card>
-          <EmptyState
-            icon={<Trophy className="size-6" />}
-            title="Todavía no hay partidos"
-            description="Fecha, rival, resultado, minutos y estadísticas cargadas a mano. Lo que no se registra, no se inventa."
+        {matches.isPending && !matches.data ? (
+          <LoadingState rows={3} />
+        ) : matches.isError && !matches.data ? (
+          <ErrorState
+            description={friendlyError(matches.error)}
+            onRetry={() => void matches.refetch()}
           />
-        </Card>
+        ) : (matches.data ?? []).length === 0 ? (
+          <Card>
+            <EmptyState
+              icon={<Trophy className="size-6" />}
+              title="Todavía no hay partidos"
+              description="Fecha, rival, resultado, minutos y estadísticas cargadas a mano. Lo que no se registra, no se inventa."
+              action={
+                <Button size="sm" onClick={() => setSheet({ match: null })}>
+                  Registrar el primero
+                </Button>
+              }
+            />
+          </Card>
+        ) : (
+          <MatchList matches={matches.data!} onEdit={(m) => setSheet({ match: m })} />
+        )}
       </Section>
 
-      <Section title="Después de cada partido">
-        <Card tone="gold">
-          <p className="eyebrow text-gold-strong">Evaluación personal</p>
-          <ul className="mt-2 flex flex-col gap-1.5 text-sm">
-            {reflection.map((q) => (
-              <li key={q} className="flex gap-2">
-                <span className="text-gold-strong" aria-hidden>
-                  ·
-                </span>
-                {q}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 flex items-center gap-2 text-sm font-medium">
-            <Sparkles className="size-4 text-gold-strong" aria-hidden />Y “Mi mejor jugada”, con
-            foto o video.
-          </p>
-        </Card>
-      </Section>
+      {sheet && (
+        <MatchSheet
+          open
+          match={sheet?.match ?? null}
+          onClose={() => setSheet(null)}
+          onSaved={() => {
+            setSheet(null);
+            void queryClient.invalidateQueries({ queryKey: matchKeys.all(player.id) });
+          }}
+        />
+      )}
     </>
   );
 }

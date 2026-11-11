@@ -19,14 +19,20 @@ import { LinkButton } from '@/components/ui/Button';
 import { Section } from '@/components/layout/Section';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { useAuth, usePlayer } from '@/contexts/authContext';
-import { playerSubtitle } from '@/features/players/format';
+import { parseDateOnly, playerSubtitle } from '@/features/players/format';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { capitalize, formatLongDate, greetingFor } from '@/utils/date';
 import { QuickActions } from './QuickActions';
 import { PlayerAccountPrompt } from '@/features/players/PlayerAccountPrompt';
 import { useSessions, useWorkouts } from '@/features/training/hooks';
 import { relativeDay, rpeLabels, scheduledLabel, weeklySummary } from '@/features/training/format';
-import { format } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
+import { useMatches } from '@/features/matches/hooks';
+import { useGoals } from '@/features/goals/hooks';
+import { useWellness } from '@/features/wellness/hooks';
+import { lightInfo } from '@/features/wellness/traffic';
+import { goalStatusLabels } from '@/features/goals/logic';
+import { ProgressBar } from '@/components/ui/Progress';
 
 export default function DashboardPage() {
   useDocumentTitle('Inicio');
@@ -43,6 +49,14 @@ export default function DashboardPage() {
   const week = sessions.data ? weeklySummary(sessions.data, now) : null;
   const last = sessions.data?.find((s) => s.status === 'completed');
   const today = format(now, 'yyyy-MM-dd');
+  const matches = useMatches();
+  const goals = useGoals();
+  const wellness = useWellness();
+  const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const matchesThisWeek = matches.data?.filter((m) => m.played_on >= weekStart).length ?? 0;
+  const activeGoals = (goals.data ?? []).filter((g) => g.status !== 'completed');
+  const todayWellness = wellness.data?.find((w) => w.log_date === today) ?? null;
+  const lastWellness = todayWellness ?? wellness.data?.[0] ?? null;
   const next = (workouts.data ?? [])
     .filter((w) => !w.is_template && w.scheduled_for && w.scheduled_for >= today)
     .sort((a, b) => a.scheduled_for!.localeCompare(b.scheduled_for!))[0];
@@ -90,7 +104,7 @@ export default function DashboardPage() {
             <StatTile
               tone="dark"
               label="Partidos"
-              value={null}
+              value={matches.data ? matchesThisWeek : null}
               icon={<Trophy className="size-3.5" aria-hidden />}
             />
           </div>
@@ -195,45 +209,80 @@ export default function DashboardPage() {
         <Card>
           <CardHeader
             eyebrow="Objetivos activos"
-            title="Ninguno en curso"
+            title={activeGoals.length > 0 ? `${activeGoals.length} en curso` : 'Ninguno en curso'}
             icon={
               <IconBadge>
                 <Flag className="size-5" />
               </IconBadge>
             }
           />
-          <EmptyState
-            compact
-            title="¿Qué querés mejorar?"
-            description="Por ejemplo: el control con la pierna menos hábil o la precisión de pase."
-            action={
-              <LinkButton to="/objetivos" size="sm" variant="secondary">
-                Ver objetivos
-              </LinkButton>
-            }
-          />
+          {activeGoals.length > 0 ? (
+            <ul className="flex flex-col gap-2.5">
+              {activeGoals.slice(0, 3).map((g) => (
+                <li key={g.id}>
+                  <p className="text-sm font-medium">
+                    {g.name}{' '}
+                    <span className="text-xs text-muted">· {goalStatusLabels[g.status]}</span>
+                  </p>
+                  <ProgressBar
+                    value={g.progress}
+                    label={`Progreso de ${g.name}`}
+                    className="mt-1"
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              compact
+              title="¿Qué querés mejorar?"
+              description="Por ejemplo: el control con la pierna menos hábil o la precisión de pase."
+              action={
+                <LinkButton to="/objetivos" size="sm" variant="secondary">
+                  Ver objetivos
+                </LinkButton>
+              }
+            />
+          )}
         </Card>
 
         <Card>
           <CardHeader
             eyebrow="Bienestar"
-            title="Sin registros recientes"
+            title={
+              lastWellness?.traffic_light
+                ? `Semáforo ${lightInfo[lastWellness.traffic_light].label.toLowerCase()}`
+                : 'Sin registros recientes'
+            }
             icon={
               <IconBadge>
                 <Moon className="size-5" />
               </IconBadge>
             }
           />
-          <EmptyState
-            compact
-            title="¿Cómo te levantaste hoy?"
-            description="Sueño, energía y molestias, en menos de un minuto."
-            action={
+          {lastWellness?.traffic_light ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted">
+                {todayWellness
+                  ? 'Registrado hoy.'
+                  : 'Último registro: ' + relativeDay(parseDateOnly(lastWellness.log_date)) + '.'}
+              </p>
               <LinkButton to="/recuperacion" size="sm" variant="secondary">
-                Registrar bienestar
+                {todayWellness ? 'Ver' : 'Registrar hoy'}
               </LinkButton>
-            }
-          />
+            </div>
+          ) : (
+            <EmptyState
+              compact
+              title="¿Cómo te levantaste hoy?"
+              description="Sueño, energía y molestias, en menos de un minuto."
+              action={
+                <LinkButton to="/recuperacion" size="sm" variant="secondary">
+                  Registrar bienestar
+                </LinkButton>
+              }
+            />
+          )}
         </Card>
       </div>
 

@@ -10,7 +10,16 @@ vi.mock('idb-keyval', () => ({
 const sendSession = vi.fn();
 vi.mock('@/features/training/api', () => ({ sendSession: (...a: unknown[]) => sendSession(...a) }));
 
+const sendMatch = vi.fn();
+vi.mock('@/features/matches/api', () => ({ sendMatch: (...a: unknown[]) => sendMatch(...a) }));
+const sendWellness = vi.fn();
+vi.mock('@/features/wellness/api', () => ({
+  sendWellness: (...a: unknown[]) => sendWellness(...a),
+}));
+
 import {
+  enqueueMatch,
+  enqueueWellness,
   __resetOutboxForTests,
   enqueueSession,
   flushOutbox,
@@ -88,6 +97,37 @@ describe('cola sin conexión', () => {
     await flushOutbox('u2');
     expect(sendSession).toHaveBeenCalledOnce();
     expect((await listOutbox()).map((i) => i.id)).toEqual(['c1']);
+  });
+});
+
+describe('cola: partidos y bienestar', () => {
+  beforeEach(() => {
+    store.clear();
+    sendMatch.mockReset();
+    sendWellness.mockReset();
+    __resetOutboxForTests();
+    setOnline(false);
+  });
+
+  it('un partido y un bienestar sin conexión se envían al volver, cada uno a su destino', async () => {
+    await enqueueMatch('u1', { match: { client_id: 'm1' } } as never);
+    await enqueueWellness('u1', { client_id: 'w1' } as never);
+    expect((await listOutbox('u1')).map((i) => i.kind)).toEqual(['save_match', 'save_wellness']);
+    setOnline(true);
+    sendMatch.mockResolvedValue('id');
+    sendWellness.mockResolvedValue('id');
+    await flushOutbox('u1');
+    expect(sendMatch).toHaveBeenCalledOnce();
+    expect(sendWellness).toHaveBeenCalledOnce();
+    expect(await listOutbox('u1')).toEqual([]);
+  });
+
+  it('reeditar un partido pendiente reemplaza el anterior (mismo client_id)', async () => {
+    await enqueueMatch('u1', { match: { client_id: 'm1', opponent: 'A' } } as never);
+    await enqueueMatch('u1', { match: { client_id: 'm1', opponent: 'B' } } as never);
+    const items = await listOutbox('u1');
+    expect(items).toHaveLength(1);
+    expect((items[0]!.payload as { match: { opponent: string } }).match.opponent).toBe('B');
   });
 });
 

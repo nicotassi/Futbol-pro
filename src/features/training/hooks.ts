@@ -65,6 +65,7 @@ export function useSessions() {
     if (!query.data && pending.length === 0) return undefined;
     const synced = new Set((query.data ?? []).map((s) => s.client_id));
     const local: SessionView[] = pending
+      .flatMap((p) => (p.kind === 'finish_session' ? [p] : []))
       .filter((p) => !synced.has(p.id) && p.payload.session.player_id === player.id)
       .map((p) => ({
         ...p.payload.session,

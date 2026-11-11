@@ -1,5 +1,7 @@
 import { get, set } from 'idb-keyval';
 import { sendSession, type SessionPayload } from '@/features/training/api';
+import { sendMatch, type MatchPayload } from '@/features/matches/api';
+import { sendWellness, type WellnessPayload } from '@/features/wellness/api';
 
 /**
  * Cola de registros pendientes (modo sin conexión).
@@ -8,14 +10,35 @@ import { sendSession, type SessionPayload } from '@/features/training/api';
  * base apenas hay conexión. Cada registro lleva un client_id único: si un envío
  * se repite, la base no lo duplica. La base sigue siendo la fuente de verdad.
  */
-export interface OutboxItem {
-  id: string; // = client_id de la sesión
+interface OutboxBase {
+  id: string; // = client_id del registro
   userId: string;
-  kind: 'finish_session';
-  payload: SessionPayload;
   createdAt: number;
   attempts: number;
   lastError?: string;
+}
+export type OutboxItem = OutboxBase &
+  (
+    | { kind: 'finish_session'; payload: SessionPayload }
+    | { kind: 'save_match'; payload: MatchPayload }
+    | { kind: 'save_wellness'; payload: WellnessPayload }
+  );
+
+/** Datos nuevos (sin `id`/`userId`...) listos para encolar. */
+type NewItem =
+  | { kind: 'finish_session'; payload: SessionPayload; id: string }
+  | { kind: 'save_match'; payload: MatchPayload; id: string }
+  | { kind: 'save_wellness'; payload: WellnessPayload; id: string };
+
+function send(item: OutboxItem): Promise<string> {
+  switch (item.kind) {
+    case 'finish_session':
+      return sendSession(item.payload);
+    case 'save_match':
+      return sendMatch(item.payload);
+    case 'save_wellness':
+      return sendWellness(item.payload);
+  }
 }
 
 const KEY = 'fp-outbox';
@@ -72,15 +95,23 @@ const isNetworkError = (e: unknown) =>
   e instanceof TypeError ||
   /fetch|network|load failed/i.test(String((e as { message?: string })?.message ?? ''));
 
-/** Guarda un registro en la cola e intenta enviarlo enseguida. */
-export async function enqueueSession(userId: string, payload: SessionPayload) {
+async function enqueue(userId: string, item: NewItem) {
   const items = await load();
-  const id = payload.session.client_id;
-  const next = items.filter((i) => i.id !== id);
-  next.push({ id, userId, kind: 'finish_session', payload, createdAt: Date.now(), attempts: 0 });
+  const next = items.filter((i) => i.id !== item.id);
+  next.push({ ...item, userId, createdAt: Date.now(), attempts: 0 } as OutboxItem);
   await save(next);
   await flushOutbox(userId);
 }
+
+/** Guarda un registro en la cola e intenta enviarlo enseguida. */
+export const enqueueSession = (userId: string, payload: SessionPayload) =>
+  enqueue(userId, { kind: 'finish_session', payload, id: payload.session.client_id });
+
+export const enqueueMatch = (userId: string, payload: MatchPayload) =>
+  enqueue(userId, { kind: 'save_match', payload, id: payload.match.client_id });
+
+export const enqueueWellness = (userId: string, payload: WellnessPayload) =>
+  enqueue(userId, { kind: 'save_wellness', payload, id: payload.client_id });
 
 /** Envía los pendientes del usuario actual, en orden. */
 export function flushOutbox(userId: string): Promise<void> {
@@ -92,7 +123,7 @@ export function flushOutbox(userId: string): Promise<void> {
       for (const item of items.filter((i) => i.userId === userId)) {
         if (typeof navigator !== 'undefined' && !navigator.onLine) break;
         try {
-          await sendSession(item.payload);
+          await send(item);
           items = (await load()).filter((i) => i.id !== item.id);
           await save(items);
           synced = true;

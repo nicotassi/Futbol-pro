@@ -231,6 +231,7 @@ test('sin conexión, un entrenamiento libre queda guardado y se envía al volver
   const mock = await mockSupabase(page);
   await loginAs(page, 'player');
   await nav(page, 'Entrenar');
+  await expect(page.getByRole('button', { name: 'Registrar entrenamiento libre' })).toBeVisible();
 
   await context.setOffline(true);
   mock.serverDown = true;

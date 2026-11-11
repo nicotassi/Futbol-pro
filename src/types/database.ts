@@ -191,11 +191,169 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      matches: {
+        Row: {
+          id: string;
+          player_id: string;
+          played_on: string;
+          opponent: string;
+          competition: string | null;
+          goals_for: number | null;
+          goals_against: number | null;
+          position: string | null;
+          minutes: number | null;
+          starter: boolean | null;
+          notes: string | null;
+          client_id: string;
+          removed: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: { removed?: boolean };
+        Relationships: [];
+      };
+      match_statistics: {
+        Row: {
+          match_id: string;
+          player_id: string;
+          goals: number | null;
+          assists: number | null;
+          passes_ok: number | null;
+          passes_failed: number | null;
+          recoveries: number | null;
+          interceptions: number | null;
+          shots: number | null;
+          shots_on_target: number | null;
+          duels_won: number | null;
+          losses: number | null;
+          fouls: number | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      match_reflections: {
+        Row: {
+          match_id: string;
+          player_id: string;
+          physical: number | null;
+          focus: number | null;
+          decisions: number | null;
+          offered_support: number | null;
+          helped_recover: number | null;
+          rating: number | null;
+          did_well: string | null;
+          to_improve: string | null;
+          best_play_what: string | null;
+          best_play_decision: string | null;
+          best_play_good: string | null;
+          best_play_different: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      wellness_logs: {
+        Row: {
+          id: string;
+          player_id: string;
+          log_date: string;
+          sleep_hours: number | null;
+          sleep_quality: number | null;
+          energy: number | null;
+          soreness: number | null;
+          discomfort: string | null;
+          motivation: number | null;
+          overall: number | null;
+          hydration: number | null;
+          pain_level: number;
+          sick: boolean;
+          traffic_light: Database['public']['Enums']['traffic_light'] | null;
+          notes: string | null;
+          client_id: string;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      goals: {
+        Row: {
+          id: string;
+          player_id: string;
+          name: string;
+          description: string | null;
+          start_date: string;
+          target_date: string | null;
+          progress: number;
+          status: Database['public']['Enums']['goal_status'];
+          notes: string | null;
+          approved: boolean;
+          proposed_by: string | null;
+          removed: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          player_id: string;
+          name: string;
+          description?: string | null;
+          start_date?: string;
+          target_date?: string | null;
+          progress?: number;
+          status?: Database['public']['Enums']['goal_status'];
+          approved?: boolean;
+        };
+        Update: Partial<{
+          name: string;
+          description: string | null;
+          target_date: string | null;
+          progress: number;
+          status: Database['public']['Enums']['goal_status'];
+          approved: boolean;
+          removed: boolean;
+        }>;
+        Relationships: [];
+      };
+      assessments: {
+        Row: {
+          id: string;
+          player_id: string;
+          assessed_on: string;
+          dimension: Database['public']['Enums']['skill_dimension'];
+          test_name: string;
+          value: number | null;
+          unit: string | null;
+          score: number | null;
+          notes: string | null;
+          removed: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          player_id: string;
+          assessed_on: string;
+          dimension: Database['public']['Enums']['skill_dimension'];
+          test_name: string;
+          value?: number | null;
+          unit?: string | null;
+          score?: number | null;
+          notes?: string | null;
+        };
+        Update: { removed?: boolean };
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
       save_workout: { Args: { p_workout: Json; p_items: Json }; Returns: string };
       finish_session: { Args: { p_session: Json; p_results: Json }; Returns: string };
+      save_match: { Args: { p_match: Json; p_stats: Json; p_reflection: Json }; Returns: string };
+      save_wellness: { Args: { p_log: Json }; Returns: string };
     };
     Enums: {
       app_role: 'admin' | 'player';
@@ -203,6 +361,9 @@ export type Database = {
       exercise_category:
         'speed' | 'technique' | 'strength' | 'endurance' | 'coordination' | 'tactics';
       session_status: 'in_progress' | 'completed' | 'abandoned';
+      traffic_light: 'green' | 'yellow' | 'red';
+      goal_status: 'pending' | 'in_progress' | 'completed';
+      skill_dimension: 'control' | 'passing' | 'speed' | 'endurance' | 'coordination' | 'vision';
     };
     CompositeTypes: { [_ in never]: never };
   };

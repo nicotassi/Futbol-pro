@@ -12,7 +12,7 @@ Aplicación web progresiva (PWA), mobile-first y privada, para seguir y desarrol
 | 1    | Diseño, estructura, navegación, PWA base                   | ✅ Validada      |
 | 2    | Supabase: base de datos, usuarios, RLS                     | ✅ En producción |
 | 3    | Entrenamiento: biblioteca, constructor, modo entrenamiento | ✅ En producción |
-| 4    | Partidos, bienestar, objetivos, evaluaciones               | ⏭️ Siguiente     |
+| 4    | Partidos, bienestar, objetivos, evaluaciones               | ✅ Implementada  |
 | 5    | Registro del reloj con IA y validación manual              | —                |
 | 6    | Evolución, gráficos, calendario, logros                    | —                |
 | 7    | Pruebas en Android y publicación                           | —                |
@@ -47,7 +47,7 @@ El catálogo visual de componentes está en `/_design`. Solo existe en modo desa
 | `npm run format`    | Prettier                                                                 |
 | `npm test`          | Tests unitarios y de componentes (Vitest)                                |
 | `npm run test:e2e`  | Tests end-to-end en viewport Android (Pixel 7) y escritorio (Playwright) |
-| `npm run db:test`   | Migraciones + 70 pruebas de permisos (RLS) sobre PostgreSQL              |
+| `npm run db:test`   | Migraciones + 159 pruebas de permisos y reglas (RLS) sobre PostgreSQL    |
 | `npm run db:push`   | Aplica las migraciones al proyecto de Supabase vinculado                 |
 | `npm run family`    | Alta de cuentas y cambio de contraseñas (usa la clave secreta)           |
 
@@ -122,6 +122,7 @@ docs/             Arquitectura, planes por fase, capturas
 - [`docs/PLAN_FASE_1.md`](docs/PLAN_FASE_1.md): plan, criterios de aceptación y resultado de la Fase 1.
 - [`docs/PLAN_FASE_2.md`](docs/PLAN_FASE_2.md): base de datos, permisos, autenticación y verificación.
 - [`docs/PLAN_FASE_3.md`](docs/PLAN_FASE_3.md): biblioteca, constructor, modo entrenamiento, historial y modo sin conexión.
+- [`docs/PLAN_FASE_4.md`](docs/PLAN_FASE_4.md): partidos, bienestar con semáforo, objetivos y evaluaciones físicas.
 - [`docs/capturas/`](docs/capturas): capturas de pantalla de la Fase 1.
 
 ## Privacidad

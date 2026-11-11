@@ -46,6 +46,12 @@ export function seedTables(playerId: string): TableStore {
     workout_items: [],
     workout_sessions: [],
     session_results: [],
+    matches: [],
+    match_statistics: [],
+    match_reflections: [],
+    wellness_logs: [],
+    goals: [],
+    assessments: [],
   };
 }
 
@@ -113,7 +119,7 @@ const forbidden: RestResult = {
 };
 
 /** Tablas que solo papá puede modificar. */
-const ADMIN_WRITE = new Set(['exercises', 'workout_templates', 'workout_items']);
+const ADMIN_WRITE = new Set(['exercises', 'workout_templates', 'workout_items', 'assessments']);
 
 export function handleTable(
   tables: TableStore,
@@ -143,6 +149,20 @@ export function handleTable(
     return method === 'POST' ? forbidden : { status: 200, body: [] };
   }
 
+  // RLS de objetivos: el jugador solo propone (sin aprobar) y solo toca lo suyo sin aprobar.
+  if (table === 'goals' && caller.role !== 'admin') {
+    if (method === 'POST') {
+      const list = (Array.isArray(body) ? body : [body]) as Row[];
+      if (list.some((r) => r.approved === true)) return forbidden;
+    } else if (method === 'PATCH') {
+      const target = visible.filter((r) => matches(r, params));
+      if ((body as Row).approved === true) return { status: 200, body: [] };
+      target.filter((r) => r.approved === true).forEach((r) => target.splice(target.indexOf(r), 1));
+      target.forEach((r) => Object.assign(r, body as Row, { updated_at: now() }));
+      return { status: 200, body: target };
+    }
+  }
+
   if (method === 'POST') {
     const list = (Array.isArray(body) ? body : [body]) as Row[];
     if (table === 'exercise_favorites' && list.some((r) => r.user_id !== caller.id))
@@ -152,6 +172,10 @@ export function handleTable(
       created_at: now(),
       updated_at: now(),
       created_by: caller.id,
+      ...(table === 'goals'
+        ? { progress: 0, status: 'pending', removed: false, approved: false }
+        : {}),
+      ...(table === 'assessments' ? { removed: false } : {}),
       ...r,
     }));
     rows.push(...inserted);
@@ -280,6 +304,97 @@ export function handleRpc(
       }),
     );
     return { status: 200, body: session.id };
+  }
+  if (fn === 'save_match') {
+    const m = body.p_match as Row;
+    const stats = body.p_stats as Row | null;
+    const refl = body.p_reflection as Row | null;
+    const data = {
+      player_id: m.player_id,
+      played_on: m.played_on,
+      opponent: m.opponent,
+      competition: blank(m.competition),
+      goals_for: num(m.goals_for),
+      goals_against: num(m.goals_against),
+      position: blank(m.position),
+      minutes: num(m.minutes),
+      starter: blank(m.starter) === null ? null : m.starter === true || m.starter === 'true',
+      notes: blank(m.notes),
+      client_id: m.client_id,
+      updated_at: now(),
+    };
+    let match = tables.matches!.find((x) => x.client_id === m.client_id);
+    if (match) Object.assign(match, data);
+    else {
+      match = { id: uuid(), removed: false, created_at: now(), created_by: caller.id, ...data };
+      tables.matches!.push(match);
+    }
+    const upsert = (table: string, values: Row | null) => {
+      if (!values) return;
+      const cleaned = Object.fromEntries(
+        Object.entries(values).map(([k, v]) => [
+          k,
+          typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : blank(v),
+        ]),
+      );
+      const rows = tables[table]!;
+      const existing = rows.find((r) => r.match_id === match!.id);
+      if (existing) Object.assign(existing, cleaned);
+      else rows.push({ match_id: match!.id, player_id: m.player_id, ...cleaned });
+    };
+    upsert('match_statistics', stats);
+    upsert('match_reflections', refl);
+    return { status: 200, body: match.id };
+  }
+
+  if (fn === 'save_wellness') {
+    const w = body.p_log as Row;
+    const data: Row = { player_id: w.player_id, log_date: w.log_date, updated_at: now() };
+    for (const k of ['sleep_quality', 'energy', 'soreness', 'motivation', 'overall', 'hydration'])
+      data[k] = num(w[k]);
+    data.sleep_hours = num(w.sleep_hours);
+    data.pain_level = num(w.pain_level) ?? 0;
+    data.sick = w.sick === true || w.sick === 'true';
+    data.discomfort = blank(w.discomfort);
+    data.notes = blank(w.notes);
+    const nums = ['sleep_quality', 'energy', 'soreness', 'motivation', 'overall', 'hydration'].map(
+      (k) => data[k] as number | null,
+    );
+    const hours = data.sleep_hours as number | null;
+    const any = hours !== null || nums.some((v) => v !== null);
+    const [sq, en, so, mo, ov, hy] = nums;
+    const low = (v: number | null, n: number) => v !== null && v <= n;
+    data.traffic_light =
+      data.sick || (data.pain_level as number) >= 2 || ov === 1
+        ? 'red'
+        : (data.pain_level as number) === 1 ||
+            data.discomfort ||
+            (hours !== null && hours < 8) ||
+            low(sq, 2) ||
+            low(en, 2) ||
+            (so !== null && so >= 4) ||
+            low(mo, 2) ||
+            low(ov, 2) ||
+            low(hy, 2)
+          ? 'yellow'
+          : any
+            ? 'green'
+            : null;
+    let log = tables.wellness_logs!.find(
+      (x) => x.player_id === w.player_id && x.log_date === w.log_date,
+    );
+    if (log) Object.assign(log, data);
+    else {
+      log = {
+        id: uuid(),
+        client_id: w.client_id,
+        created_at: now(),
+        created_by: caller.id,
+        ...data,
+      };
+      tables.wellness_logs!.push(log);
+    }
+    return { status: 200, body: log.id };
   }
   return null;
 }

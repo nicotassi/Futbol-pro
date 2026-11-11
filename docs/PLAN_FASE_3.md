@@ -61,13 +61,13 @@ Supabase pide aprobación manual para las operaciones que borran filas, y esa ap
 
 ## Verificación
 
-| Prueba                                                                                                      | Resultado  |
-| ----------------------------------------------------------------------------------------------------------- | ---------- |
-| Base de datos: 103 verificaciones (RLS, `save_workout`, `finish_session`, idempotencia, biblioteca inicial) | ✅         |
-| 50 tests unitarios (cola sin conexión, lógica del modo entrenamiento, validaciones)                         | ✅         |
-| Tests e2e: 58 (29 escenarios × Android y escritorio)                                                        | ✅         |
-| Migración aplicada en Supabase                                                                              | ✅         |
+| Prueba                                                                                                      | Resultado |
+| ----------------------------------------------------------------------------------------------------------- | --------- |
+| Base de datos: 103 verificaciones (RLS, `save_workout`, `finish_session`, idempotencia, biblioteca inicial) | ✅        |
+| 50 tests unitarios (cola sin conexión, lógica del modo entrenamiento, validaciones)                         | ✅        |
+| Tests e2e: 58 (29 escenarios × Android y escritorio)                                                        | ✅        |
+| Migración aplicada en Supabase                                                                              | ✅        |
 
-## Pendiente (Fase 4)
+## Pendiente
 
-Partidos, estadísticas, evaluación personal, bienestar con semáforo, objetivos y evaluaciones físicas.
+Lo que quedaba (partidos, bienestar, objetivos y evaluaciones) se hizo en la [Fase 4](PLAN_FASE_4.md).

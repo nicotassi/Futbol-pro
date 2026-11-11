@@ -12,7 +12,8 @@ export function OutboxSync() {
     if (!user) return;
     const userId = user.id;
     setOutboxSyncedHandler(() => {
-      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      for (const key of ['sessions', 'matches', 'wellness'])
+        void queryClient.invalidateQueries({ queryKey: [key] });
     });
     const flush = () => void flushOutbox(userId);
     void listOutbox().then(flush);
