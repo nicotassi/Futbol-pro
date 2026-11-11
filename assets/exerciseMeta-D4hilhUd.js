@@ -1,0 +1,1 @@
+import{t as e}from"./exerciseCategories-BnpLGK2Y.js";var t=t=>e.find(e=>e.id===t)??e[0],n=[``,`Básico`,`Intermedio`,`Avanzado`];export{n,t};

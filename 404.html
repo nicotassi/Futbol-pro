@@ -9,14 +9,28 @@
     <link rel="icon" type="image/svg+xml" href="/Futbol-pro/icons/favicon.svg" />
     <link rel="apple-touch-icon" href="/Futbol-pro/icons/apple-touch-icon.png" />
     <title>Futbolista Pro</title>
-    <script type="module" crossorigin src="/Futbol-pro/assets/index-Crj1jZTo.js"></script>
-    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/useDocumentTitle-C4byCOm6.js">
-    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/QueryClientProvider-3o2iI_zb.js">
-    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/useQuery-CWOauyBB.js">
-    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/authContext-CtVPAeMQ.js">
+    <script>
+      // Evita el destello blanco: aplica el tema guardado antes de dibujar la página.
+      (function () {
+        try {
+          var p = localStorage.getItem('fp-theme');
+          var dark =
+            p === 'dark' ||
+            (p !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          if (dark)
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0F1013');
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/Futbol-pro/assets/index-ZxdKGMHK.js"></script>
+    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/useDocumentTitle-C5n6gcrM.js">
+    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/QueryClientProvider-CUrWYcaZ.js">
+    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/useQuery-BkPMf_Hx.js">
+    <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/authContext-DKdYjfPb.js">
     <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/errors-CogF03Hr.js">
     <link rel="modulepreload" crossorigin href="/Futbol-pro/assets/date-BXEcA7et.js">
-    <link rel="stylesheet" crossorigin href="/Futbol-pro/assets/index-BafmBSFf.css">
+    <link rel="stylesheet" crossorigin href="/Futbol-pro/assets/index-m9GA0W0u.css">
   <link rel="manifest" href="/Futbol-pro/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/Futbol-pro/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
