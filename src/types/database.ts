@@ -178,6 +178,13 @@ export type Database = {
         };
         Insert: never;
         Update: Partial<{
+          title: string;
+          started_at: string;
+          ended_at: string | null;
+          actual_minutes: number | null;
+          rpe: number | null;
+          post_state: number | null;
+          notes: string | null;
           hr_avg: number | null;
           hr_max: number | null;
           calories: number | null;
@@ -205,7 +212,7 @@ export type Database = {
           removed: boolean;
         };
         Insert: never;
-        Update: never;
+        Update: { completed?: boolean };
         Relationships: [];
       };
       matches: {

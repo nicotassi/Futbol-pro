@@ -245,13 +245,34 @@ export async function sendSession(payload: SessionPayload): Promise<string> {
   return data;
 }
 
-/** Carga o corrige los datos del reloj de una sesión ya registrada. */
-export async function updateSessionWatch(id: string, data: WatchData): Promise<void> {
-  const { data: rows, error } = await db()
+export interface SessionPatch {
+  title: string;
+  started_at: string;
+  ended_at: string | null;
+  actual_minutes: number | null;
+  rpe: number | null;
+  post_state: number | null;
+  notes: string | null;
+}
+
+/** Edita una sesión ya registrada (datos principales y del reloj). */
+export async function updateSession(id: string, patch: SessionPatch & WatchData): Promise<void> {
+  const { data, error } = await db()
     .from('workout_sessions')
-    .update(data)
+    .update(patch)
     .eq('id', id)
     .select('id');
   if (error) throw error;
-  if (rows.length === 0) throw new Error('No tenés permiso para cambiar esta sesión.');
+  if (data.length === 0) throw new Error('No tenés permiso para cambiar esta sesión.');
+}
+
+/** Marca un ejercicio de una sesión ya registrada como completado o no. */
+export async function setResultCompleted(resultId: string, completed: boolean): Promise<void> {
+  const { data, error } = await db()
+    .from('session_results')
+    .update({ completed })
+    .eq('id', resultId)
+    .select('id');
+  if (error) throw error;
+  if (data.length === 0) throw new Error('No tenés permiso para cambiar este ejercicio.');
 }

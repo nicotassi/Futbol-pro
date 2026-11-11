@@ -1,21 +1,30 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, ChevronRight, CircleDashed, CloudOff, Dumbbell } from 'lucide-react';
+import { format } from 'date-fns';
+import { CheckCircle2, ChevronRight, CircleDashed, CloudOff, Dumbbell, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Sheet } from '@/components/ui/Sheet';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { useExercises, type SessionView } from './hooks';
-import { fetchSessionResults, trainingKeys, updateSessionWatch } from './api';
+import {
+  fetchSessionResults,
+  setResultCompleted,
+  trainingKeys,
+  updateSession,
+  type SessionPatch,
+  type SessionResult,
+} from './api';
+import { buildSessionPatch, type SessionEditForm } from './sessionEdit';
+import { ScalePicker } from './ScalePicker';
+import { Input, Textarea } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { usePlayer } from '@/contexts/authContext';
 import { friendlyError } from '@/services/errors';
 import { WatchFields } from '@/features/sessionWatch/WatchFields';
 import {
   formatWatchData,
-  parseWatchForm,
   watchFormFrom,
   type WatchData as WatchDataType,
-  type WatchForm,
 } from '@/features/sessionWatch/watchData';
 import { postStateLabels, relativeDay, rpeLabels } from './format';
 
@@ -62,7 +71,9 @@ export function SessionList({ sessions }: { sessions: SessionView[] }) {
   );
 }
 
-function SessionDetail({ session }: { session: SessionView }) {
+function SessionDetail({ session: initial }: { session: SessionView }) {
+  const [session, setSession] = useState<SessionView>(initial);
+  const [editing, setEditing] = useState(false);
   const exercises = useExercises();
   const results = useQuery({
     queryKey: trainingKeys.sessionResults(session.id),
@@ -70,6 +81,22 @@ function SessionDetail({ session }: { session: SessionView }) {
     enabled: !session.pending,
   });
   const names = new Map((exercises.data ?? []).map((e) => [e.id, e.name]));
+
+  if (editing)
+    return (
+      <SessionEditor
+        session={session}
+        results={results.data ?? []}
+        names={names}
+        onCancel={() => setEditing(false)}
+        onSaved={(patch) => {
+          setSession({ ...session, ...patch });
+          setEditing(false);
+        }}
+      />
+    );
+
+  const rows = formatWatchData(session);
   return (
     <div className="flex flex-col gap-4 text-sm">
       {session.pending && (
@@ -119,31 +146,81 @@ function SessionDetail({ session }: { session: SessionView }) {
           )}
         </div>
       )}
-      {!session.pending && <WatchData session={session} />}
+      {!session.pending && (
+        <div>
+          <p className="mb-2 font-semibold">Datos del reloj</p>
+          {rows.length === 0 ? (
+            <p className="text-muted">Todavía no se cargaron datos del reloj.</p>
+          ) : (
+            <dl className="grid grid-cols-2 gap-2">
+              {rows.map(([label, value]) => (
+                <div key={label} className="rounded-[10px] bg-sand/70 px-3 py-2">
+                  <dt className="text-xs text-muted">{label}</dt>
+                  <dd className="font-medium tabular">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <p className="mt-2 text-xs text-muted">Estimaciones del reloj, no mediciones clínicas.</p>
+        </div>
+      )}
+      {!session.pending && (
+        <Button
+          variant="secondary"
+          onClick={() => setEditing(true)}
+          leadingIcon={<Pencil className="size-4" />}
+        >
+          Editar entrenamiento
+        </Button>
+      )}
     </div>
   );
 }
 
-function WatchData({ session }: { session: SessionView }) {
+/** Editar una sesión ya registrada: datos, ejercicios completados y datos del reloj. */
+function SessionEditor({
+  session,
+  results,
+  names,
+  onCancel,
+  onSaved,
+}: {
+  session: SessionView;
+  results: SessionResult[];
+  names: Map<string, string>;
+  onCancel: () => void;
+  onSaved: (patch: SessionPatch & WatchDataType) => void;
+}) {
   const queryClient = useQueryClient();
   const player = usePlayer();
-  const [editing, setEditing] = useState(false);
-  const [current, setCurrent] = useState<Partial<WatchDataType>>(session);
-  const [form, setForm] = useState<WatchForm>(() => watchFormFrom(session));
+  const [form, setForm] = useState<SessionEditForm>(() => ({
+    title: session.title,
+    date: format(new Date(session.started_at), 'yyyy-MM-dd'),
+    minutes: session.actual_minutes === null ? '' : String(session.actual_minutes),
+    rpe: session.rpe,
+    postState: session.post_state,
+    notes: session.notes ?? '',
+    watch: watchFormFrom(session),
+  }));
+  const [done, setDone] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(results.map((r) => [r.id, r.completed])),
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const rows = formatWatchData(current);
+  const set = <K extends keyof SessionEditForm>(k: K, v: SessionEditForm[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
   const save = async () => {
-    const parsed = parseWatchForm(form);
-    if ('error' in parsed) return setError(parsed.error);
+    const r = buildSessionPatch(form, session, format(new Date(), 'yyyy-MM-dd'));
+    if ('error' in r) return setError(r.error);
     setSaving(true);
     try {
-      await updateSessionWatch(session.id, parsed.data);
-      setCurrent(parsed.data);
+      await updateSession(session.id, r.patch);
+      for (const res of results)
+        if (done[res.id] !== res.completed) await setResultCompleted(res.id, done[res.id]!);
       await queryClient.invalidateQueries({ queryKey: trainingKeys.sessions(player.id) });
-      setEditing(false);
-      setError(null);
+      await queryClient.invalidateQueries({ queryKey: trainingKeys.sessionResults(session.id) });
+      onSaved(r.patch);
     } catch (e) {
       setError(friendlyError(e));
     } finally {
@@ -151,57 +228,92 @@ function WatchData({ session }: { session: SessionView }) {
     }
   };
 
-  if (editing)
-    return (
-      <div className="flex flex-col gap-3">
-        <WatchFields form={form} onChange={setForm} />
-        {error && (
-          <p
-            role="alert"
-            className="rounded-[12px] bg-danger-soft px-3 py-2 text-sm font-medium text-danger"
-          >
-            {error}
-          </p>
-        )}
-        <div className="flex gap-2">
-          <Button size="sm" disabled={saving} onClick={() => void save()}>
-            {saving ? 'Guardando…' : 'Guardar datos del reloj'}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-            Cancelar
-          </Button>
-        </div>
-      </div>
-    );
-
   return (
-    <div>
-      <p className="mb-2 font-semibold">Datos del reloj</p>
-      {rows.length === 0 ? (
-        <p className="text-muted">Todavía no se cargaron datos del reloj.</p>
-      ) : (
-        <dl className="grid grid-cols-2 gap-2">
-          {rows.map(([label, value]) => (
-            <div key={label} className="rounded-[10px] bg-sand/70 px-3 py-2">
-              <dt className="text-xs text-muted">{label}</dt>
-              <dd className="font-medium tabular">{value}</dd>
-            </div>
-          ))}
-        </dl>
+    <form
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save();
+      }}
+      className="flex flex-col gap-4"
+    >
+      <Input label="Nombre" value={form.title} onChange={(e) => set('title', e.target.value)} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Fecha"
+          type="date"
+          value={form.date}
+          onChange={(e) => set('date', e.target.value)}
+        />
+        <Input
+          label="Minutos"
+          inputMode="numeric"
+          value={form.minutes}
+          onChange={(e) => set('minutes', e.target.value)}
+        />
+      </div>
+      {results.length > 0 && (
+        <fieldset>
+          <legend className="mb-1.5 text-sm font-medium">Ejercicios completados</legend>
+          <ul className="flex flex-col gap-1">
+            {results.map((r) => (
+              <li key={r.id}>
+                <label className="flex items-center gap-3 rounded-[10px] px-2 py-2 hover:bg-sand/60">
+                  <input
+                    type="checkbox"
+                    checked={done[r.id] ?? false}
+                    onChange={(e) => setDone((d) => ({ ...d, [r.id]: e.target.checked }))}
+                    className="size-5 accent-[var(--color-gold-strong)]"
+                  />
+                  <span className="flex-1 text-sm">
+                    {names.get(r.exercise_id ?? '') ?? 'Ejercicio'}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
       )}
-      <Button
-        className="mt-3"
-        size="sm"
-        variant="secondary"
-        onClick={() => {
-          setForm(watchFormFrom(current));
-          setEditing(true);
-        }}
-      >
-        {rows.length === 0 ? 'Cargar datos del reloj' : 'Editar datos del reloj'}
-      </Button>
-      <p className="mt-2 text-xs text-muted">Estimaciones del reloj, no mediciones clínicas.</p>
-    </div>
+      <ScalePicker
+        label="Esfuerzo percibido"
+        min={1}
+        max={10}
+        value={form.rpe}
+        onChange={(v) => set('rpe', v)}
+        labels={rpeLabels}
+      />
+      <ScalePicker
+        label="¿Cómo terminaste?"
+        min={1}
+        max={5}
+        value={form.postState}
+        onChange={(v) => set('postState', v)}
+        labels={postStateLabels}
+      />
+      <Textarea
+        label="Observaciones"
+        rows={2}
+        value={form.notes}
+        onChange={(e) => set('notes', e.target.value)}
+      />
+      <WatchFields form={form.watch} onChange={(w) => set('watch', w)} />
+      {error && (
+        <p
+          role="alert"
+          className="rounded-[12px] bg-danger-soft px-3 py-2 text-sm font-medium text-danger"
+        >
+          {error}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button type="submit" disabled={saving}>
+          {saving ? 'Guardando…' : 'Guardar cambios'}
+        </Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancelar
+        </Button>
+      </div>
+    </form>
   );
 }
 

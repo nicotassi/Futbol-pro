@@ -313,15 +313,102 @@ test('se pueden cargar o corregir los datos del reloj después, desde el histori
   await page.getByRole('button', { name: /Entrenamiento del club/ }).click();
   const detail = page.getByRole('dialog');
   await expect(detail.getByText('Todavía no se cargaron datos del reloj.')).toBeVisible();
-  await detail.getByRole('button', { name: 'Cargar datos del reloj' }).click();
+  await detail.getByRole('button', { name: 'Editar entrenamiento' }).click();
   await detail.getByLabel('Calorías').fill('410');
   await detail.getByLabel('Efecto aeróbico').fill('6');
-  await detail.getByRole('button', { name: 'Guardar datos del reloj' }).click();
+  await detail.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(
     detail.getByText('Efecto aeróbico: de 1 a 5, con un decimal (ej. 3,4).'),
   ).toBeVisible();
   await detail.getByLabel('Efecto aeróbico').fill('2,8');
-  await detail.getByRole('button', { name: 'Guardar datos del reloj' }).click();
+  await detail.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(detail.getByText('410 kcal')).toBeVisible();
   expect(mock.tables.workout_sessions![0]).toMatchObject({ calories: 410, aerobic_effect: 2.8 });
+});
+
+test('se edita un entrenamiento ya hecho: nombre, día, minutos, esfuerzo y ejercicios completados', async ({
+  page,
+}) => {
+  const mock = await mockSupabase(page);
+  const [dominio, plancha] = mock.tables.exercises!;
+  const ts = new Date().toISOString();
+  const sessionId = crypto.randomUUID();
+  mock.tables.workout_sessions!.push({
+    id: sessionId,
+    player_id: PLAYER_ID,
+    template_id: null,
+    title: 'Plaza del barrio',
+    started_at: ts,
+    ended_at: ts,
+    status: 'completed',
+    actual_minutes: 30,
+    rpe: 5,
+    notes: null,
+    post_state: 3,
+    client_id: crypto.randomUUID(),
+    created_by: null,
+    created_at: ts,
+    updated_at: ts,
+    hr_avg: null,
+    hr_max: null,
+    calories: null,
+    training_load: null,
+    aerobic_effect: null,
+    anaerobic_effect: null,
+    zone_vo2max_pct: null,
+    zone_intensive_pct: null,
+  });
+  for (const [ex, completed] of [
+    [dominio, true],
+    [plancha, false],
+  ] as const)
+    mock.tables.session_results!.push({
+      id: crypto.randomUUID(),
+      session_id: sessionId,
+      player_id: PLAYER_ID,
+      workout_item_id: null,
+      exercise_id: ex!.id,
+      completed,
+      sets_done: null,
+      reps_done: null,
+      value: null,
+      unit: null,
+      notes: null,
+      removed: false,
+    });
+
+  await loginAs(page, 'player');
+  await page.goto('/entrenar/historial');
+  await page.getByRole('button', { name: /Plaza del barrio/ }).click();
+  const detail = page.getByRole('dialog');
+  await detail.getByRole('button', { name: 'Editar entrenamiento' }).click();
+
+  await detail.getByLabel('Nombre').fill('X');
+  await detail.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(detail.getByText('Poné un nombre (mínimo 2 letras).')).toBeVisible();
+
+  await detail.getByLabel('Nombre').fill('Fútbol en la plaza');
+  await detail.getByLabel('Minutos', { exact: true }).fill('50');
+  await detail.getByRole('button', { name: '8: Muy duro' }).click();
+  await detail.getByLabel('Plancha').check();
+  await detail.getByLabel('Dominio de pelota').uncheck();
+  await detail.getByLabel('Calorías').fill('380');
+  await detail.getByRole('button', { name: 'Guardar cambios' }).click();
+
+  await expect(detail.getByText('8/10 · Muy duro')).toBeVisible();
+  await expect(detail.getByText('50 min')).toBeVisible();
+  await expect(detail.getByText('380 kcal')).toBeVisible();
+  expect(mock.tables.workout_sessions![0]).toMatchObject({
+    title: 'Fútbol en la plaza',
+    actual_minutes: 50,
+    rpe: 8,
+    calories: 380,
+  });
+  const byEx = (id: unknown) => mock.tables.session_results!.find((r) => r.exercise_id === id)!;
+  expect(byEx(plancha!.id).completed).toBe(true);
+  expect(byEx(dominio!.id).completed).toBe(false);
+  expect(mock.tables.workout_sessions).toHaveLength(1); // se edita, no se duplica
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByText('Fútbol en la plaza')).toBeVisible();
 });
