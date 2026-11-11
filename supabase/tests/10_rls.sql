@@ -123,7 +123,7 @@ select tests.ok(tests.affected($$update public.profiles set display_name = 'Benj
 select tests.ok(tests.affected($$update public.profiles set display_name = 'X' where id = '00000000-0000-0000-0000-00000000000a'$$) = 0, 'jugador no puede cambiar el nombre de papá');
 
 -- Contenido administrado por papá
-select tests.ok((select count(*) = 1 from public.exercises), 'jugador ve los ejercicios de su biblioteca');
+select tests.ok((select count(*) = 31 from public.exercises), 'jugador ve los ejercicios de su biblioteca (30 base + 1)');
 select tests.throws($$insert into public.exercises (player_id, name, category) values ('10000000-0000-0000-0000-000000000001', 'Nuevo', 'speed')$$, '42501', 'jugador no puede crear ejercicios');
 select tests.ok(tests.affected($$delete from public.exercises$$) = 0, 'jugador no puede borrar ejercicios');
 select tests.throws($$insert into public.calendar_events (player_id, title, category, event_date) values ('10000000-0000-0000-0000-000000000001', 'Partido', 'match', current_date)$$, '42501', 'jugador no puede crear eventos del calendario');
@@ -180,7 +180,7 @@ select tests.ok(tests.affected($$update public.players set club = 'X' where id =
 select tests.ok((select count(*) = 0 from public.exercises where player_id = '10000000-0000-0000-0000-000000000002'), 'papá no ve la biblioteca de otra familia');
 
 insert into public.exercises (player_id, name, category) values ('10000000-0000-0000-0000-000000000001', 'Pases contra la pared', 'technique');
-select tests.ok((select count(*) = 2 from public.exercises), 'papá puede crear ejercicios');
+select tests.ok((select count(*) = 32 from public.exercises), 'papá puede crear ejercicios');
 select tests.ok(tests.affected($$update public.goals set approved = true, status = 'in_progress' where id = '50000000-0000-0000-0000-000000000001'$$) = 1, 'papá puede aprobar objetivos');
 select tests.ok((select proposed_by = '00000000-0000-0000-0000-00000000000b' from public.goals where id = '50000000-0000-0000-0000-000000000001'), 'aprobar no cambia quién propuso el objetivo');
 select tests.ok(tests.affected($$delete from public.workout_sessions where id = '30000000-0000-0000-0000-0000000000b1'$$) = 1, 'papá puede borrar sesiones');
