@@ -390,6 +390,32 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      calendar_events: {
+        Row: {
+          id: string;
+          player_id: string;
+          title: string;
+          category: Database['public']['Enums']['calendar_category'];
+          event_date: string;
+          start_time: string | null;
+          est_minutes: number | null;
+          description: string | null;
+          status: Database['public']['Enums']['event_status'];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          player_id: string;
+          title: string;
+          category: Database['public']['Enums']['calendar_category'];
+          event_date: string;
+          start_time?: string | null;
+          est_minutes?: number | null;
+          description?: string | null;
+        };
+        Update: { status?: Database['public']['Enums']['event_status'] };
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -419,6 +445,9 @@ export type Database = {
         'speed' | 'technique' | 'strength' | 'endurance' | 'coordination' | 'tactics';
       session_status: 'in_progress' | 'completed' | 'abandoned';
       traffic_light: 'green' | 'yellow' | 'red';
+      calendar_category:
+        'club_training' | 'extra_training' | 'match' | 'assessment' | 'rest' | 'goal' | 'special';
+      event_status: 'planned' | 'done' | 'cancelled';
       watch_metric_type:
         | 'duration'
         | 'heart_rate_avg'

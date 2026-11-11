@@ -52,6 +52,7 @@ export function seedTables(playerId: string): TableStore {
     wellness_logs: [],
     goals: [],
     assessments: [],
+    calendar_events: [],
     watch_uploads: [],
     watch_metrics: [],
   };
@@ -73,6 +74,15 @@ function matches(row: Row, params: URLSearchParams): boolean {
         break;
       case 'is':
         if (value === 'null' ? cell !== null && cell !== undefined : String(cell) !== value)
+          return false;
+        break;
+      case 'in':
+        if (
+          !value
+            .replace(/^\(|\)$/g, '')
+            .split(',')
+            .includes(asString ?? '')
+        )
           return false;
         break;
       case 'gte':
@@ -178,6 +188,7 @@ export function handleTable(
         ? { progress: 0, status: 'pending', removed: false, approved: false }
         : {}),
       ...(table === 'assessments' ? { removed: false } : {}),
+      ...(table === 'calendar_events' ? { status: 'planned' } : {}),
       ...r,
     }));
     rows.push(...inserted);

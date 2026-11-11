@@ -21,7 +21,12 @@ import { Button } from '@/components/ui/Button';
 import { Segmented } from '@/components/ui/Segmented';
 import { ProgressBar } from '@/components/ui/Progress';
 import { EmptyState } from '@/components/feedback/EmptyState';
-import { PhaseNotice } from '@/components/feedback/PhaseNotice';
+import {
+  achievements as computeAchievements,
+  computePoints,
+  levelFor,
+} from '@/features/progress/logic';
+import { useProgressData } from '@/features/progress/useProgressData';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { Badge } from '@/components/ui/Badge';
@@ -63,6 +68,10 @@ export default function GoalsPage() {
   const { isAdmin } = useAuth();
   const player = usePlayer();
   const queryClient = useQueryClient();
+  const progress = useProgressData();
+  const points = computePoints(progress.input);
+  const level = levelFor(points);
+  const medals = computeAchievements(progress.input);
   const goals = useGoals();
   const assessments = useAssessments();
   const [goalSheet, setGoalSheet] = useState(false);
@@ -124,16 +133,18 @@ export default function GoalsPage() {
           <Medal className="size-7" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="eyebrow text-gold">Nivel 1</p>
-          <p className="font-display text-lg font-semibold">Debut</p>
+          <p className="eyebrow text-gold">Nivel {level.index}</p>
+          <p className="font-display text-lg font-semibold">{level.name}</p>
           <ProgressBar
             tone="dark"
-            value={0}
+            value={level.pct}
             label="Experiencia para el próximo nivel"
             className="mt-2"
           />
           <p className="mt-1.5 text-xs text-fog">
-            0 puntos · los puntos se ganan con constancia, no con cantidad.
+            {points} puntos ·{' '}
+            {level.next ? `faltan ${level.toNext} para ${level.next}` : 'nivel máximo'}. Se ganan
+            con constancia, no con cantidad.
           </p>
         </div>
       </Card>
@@ -320,7 +331,27 @@ export default function GoalsPage() {
 
       {tab === 'achievements' && (
         <div role="tabpanel" id="goals-panel-achievements" aria-labelledby="goals-tab-achievements">
-          <PhaseNotice className="mt-4" phase={6} feature="El sistema de logros e insignias" />
+          <Section title="Mis logros">
+            <ul className="grid grid-cols-2 gap-3">
+              {medals.map((m) => (
+                <li key={m.code}>
+                  <Card className={m.earned ? 'border-gold/60' : 'opacity-60'}>
+                    <p className="flex items-center gap-1.5 font-semibold">
+                      <Award
+                        className={`size-4 ${m.earned ? 'text-gold-strong' : 'text-muted'}`}
+                        aria-hidden
+                      />
+                      {m.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted">{m.description}</p>
+                    <p className="mt-1 text-xs font-semibold">
+                      {m.earned ? 'Conseguido' : 'Por conseguir'}
+                    </p>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          </Section>
           <Section title="Cómo se ganan puntos">
             <Card padded={false}>
               <ul className="divide-y divide-line text-sm">

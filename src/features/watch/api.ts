@@ -127,3 +127,15 @@ export async function addManualMetric(opts: {
   });
   if (error) throw error;
 }
+
+/** Datos del reloj ya revisados por papá (los únicos que cuentan). */
+export async function fetchConfirmedMetrics(sessionId: string): Promise<WatchMetric[]> {
+  const { data, error } = await db()
+    .from('watch_metrics')
+    .select('*')
+    .eq('workout_session_id', sessionId)
+    .in('validation_status', ['confirmed', 'corrected'])
+    .order('metric_type');
+  if (error) throw error;
+  return data;
+}

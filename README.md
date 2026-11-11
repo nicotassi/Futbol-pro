@@ -6,16 +6,16 @@ Aplicación web progresiva (PWA), mobile-first y privada, para seguir y desarrol
 
 ## Estado del proyecto
 
-| Fase | Contenido                                                  | Estado           |
-| ---- | ---------------------------------------------------------- | ---------------- |
-| 0    | Análisis del entorno, arquitectura y plan                  | ✅ Aprobada      |
-| 1    | Diseño, estructura, navegación, PWA base                   | ✅ Validada      |
-| 2    | Supabase: base de datos, usuarios, RLS                     | ✅ En producción |
-| 3    | Entrenamiento: biblioteca, constructor, modo entrenamiento | ✅ En producción |
-| 4    | Partidos, bienestar, objetivos, evaluaciones               | ✅ Implementada  |
-| 5    | Registro del reloj con IA y validación manual              | —                |
-| 6    | Evolución, gráficos, calendario, logros                    | —                |
-| 7    | Pruebas en Android y publicación                           | —                |
+| Fase | Contenido                                                  | Estado                      |
+| ---- | ---------------------------------------------------------- | --------------------------- |
+| 0    | Análisis del entorno, arquitectura y plan                  | ✅ Aprobada                 |
+| 1    | Diseño, estructura, navegación, PWA base                   | ✅ Validada                 |
+| 2    | Supabase: base de datos, usuarios, RLS                     | ✅ En producción            |
+| 3    | Entrenamiento: biblioteca, constructor, modo entrenamiento | ✅ En producción            |
+| 4    | Partidos, bienestar, objetivos, evaluaciones               | ✅ Implementada             |
+| 5    | Registro del reloj con IA y validación manual              | ✅ (falta la clave de IA)   |
+| 6    | Evolución, gráficos, calendario, logros                    | ✅ Implementada             |
+| 7    | Pruebas en Android y publicación                           | ✅ (probar en celular real) |
 
 Desde la Fase 2 la app guarda los datos en **Supabase** (PostgreSQL con permisos por fila), con inicio de sesión para papá y para Benja. Las funciones de las fases siguientes aparecen con un aviso: "se habilita en la Fase N".
 
@@ -47,7 +47,7 @@ El catálogo visual de componentes está en `/_design`. Solo existe en modo desa
 | `npm run format`    | Prettier                                                                 |
 | `npm test`          | Tests unitarios y de componentes (Vitest)                                |
 | `npm run test:e2e`  | Tests end-to-end en viewport Android (Pixel 7) y escritorio (Playwright) |
-| `npm run db:test`   | Migraciones + 159 pruebas de permisos y reglas (RLS) sobre PostgreSQL    |
+| `npm run db:test`   | Migraciones + 174 pruebas de permisos y reglas (RLS) sobre PostgreSQL    |
 | `npm run db:push`   | Aplica las migraciones al proyecto de Supabase vinculado                 |
 | `npm run family`    | Alta de cuentas y cambio de contraseñas (usa la clave secreta)           |
 
@@ -76,7 +76,7 @@ El catálogo visual de componentes está en `/_design`. Solo existe en modo desa
 | -------------------- | ------------------------------------------------- | ------------------------ |
 | `.env.local`         | URL y clave **publicable** de Supabase (frontend) | No                       |
 | `.env.server.local`  | Clave **secreta** (solo para `npm run family`)    | **Nunca**                |
-| Secretos de Supabase | Clave de IA (Fase 5)                              | No (viven en Supabase)   |
+| Secretos de Supabase | `ANTHROPIC_API_KEY` (análisis del reloj)          | No (viven en Supabase)   |
 
 La clave publicable es pública por diseño: la seguridad la dan las políticas RLS de la base. La clave secreta saltea esas políticas, por eso nunca va al frontend.
 
@@ -123,6 +123,7 @@ docs/             Arquitectura, planes por fase, capturas
 - [`docs/PLAN_FASE_2.md`](docs/PLAN_FASE_2.md): base de datos, permisos, autenticación y verificación.
 - [`docs/PLAN_FASE_3.md`](docs/PLAN_FASE_3.md): biblioteca, constructor, modo entrenamiento, historial y modo sin conexión.
 - [`docs/PLAN_FASE_4.md`](docs/PLAN_FASE_4.md): partidos, bienestar con semáforo, objetivos y evaluaciones físicas.
+- [`docs/PLAN_FASE_5_6_7.md`](docs/PLAN_FASE_5_6_7.md): reloj con IA, evolución, calendario, logros y cierre.
 - [`docs/capturas/`](docs/capturas): capturas de pantalla de la Fase 1.
 
 ## Privacidad

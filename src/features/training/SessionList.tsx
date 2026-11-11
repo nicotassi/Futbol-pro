@@ -6,6 +6,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { useExercises, type SessionView } from './hooks';
 import { fetchSessionResults, trainingKeys } from './api';
+import { fetchConfirmedMetrics, metricLabels } from '@/features/watch/api';
 import { postStateLabels, relativeDay, rpeLabels } from './format';
 
 export function SessionList({ sessions }: { sessions: SessionView[] }) {
@@ -108,7 +109,35 @@ function SessionDetail({ session }: { session: SessionView }) {
           )}
         </div>
       )}
-      <p className="text-xs text-muted">Los datos del reloj se suman en la Fase 5.</p>
+      {!session.pending && <WatchData sessionId={session.id} />}
+    </div>
+  );
+}
+
+function WatchData({ sessionId }: { sessionId: string }) {
+  const metrics = useQuery({
+    queryKey: ['watch-session', sessionId],
+    queryFn: () => fetchConfirmedMetrics(sessionId),
+  });
+  const rows = metrics.data ?? [];
+  if (rows.length === 0)
+    return <p className="text-xs text-muted">Sin datos del reloj confirmados para esta sesión.</p>;
+  return (
+    <div>
+      <p className="mb-2 font-semibold">Datos del reloj</p>
+      <ul className="flex flex-col gap-1">
+        {rows.map((m) => (
+          <li key={m.id} className="flex justify-between gap-3">
+            <span>{metricLabels[m.metric_type].label}</span>
+            <span className="font-medium tabular">
+              {m.confirmed_value} {m.metric_unit ?? ''}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-muted">
+        Estimaciones del dispositivo, no mediciones clínicas. Confirmadas por papá.
+      </p>
     </div>
   );
 }
