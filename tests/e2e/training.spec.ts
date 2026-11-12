@@ -412,3 +412,72 @@ test('se edita un entrenamiento ya hecho: nombre, día, minutos, esfuerzo y ejer
   await page.keyboard.press('Escape');
   await expect(page.getByText('Fútbol en la plaza')).toBeVisible();
 });
+
+test.describe('Eliminar un entrenamiento', () => {
+  function seedSession(mock: Awaited<ReturnType<typeof mockSupabase>>) {
+    const ts = new Date().toISOString();
+    const id = crypto.randomUUID();
+    mock.tables.workout_sessions!.push({
+      id,
+      player_id: PLAYER_ID,
+      template_id: null,
+      title: 'Sesión a borrar',
+      started_at: ts,
+      ended_at: ts,
+      status: 'completed',
+      actual_minutes: 30,
+      rpe: 5,
+      notes: null,
+      post_state: 3,
+      client_id: crypto.randomUUID(),
+      created_by: null,
+      created_at: ts,
+      updated_at: ts,
+    });
+    mock.tables.session_results!.push({
+      id: crypto.randomUUID(),
+      session_id: id,
+      player_id: PLAYER_ID,
+      workout_item_id: null,
+      exercise_id: mock.tables.exercises![0]!.id,
+      completed: true,
+      sets_done: null,
+      reps_done: null,
+      value: null,
+      unit: null,
+      notes: null,
+      removed: false,
+    });
+  }
+
+  test('papá lo elimina con confirmación y se borra de verdad', async ({ page }) => {
+    const mock = await mockSupabase(page);
+    seedSession(mock);
+    await loginAs(page, 'admin');
+    await page.goto('/entrenar/historial');
+    await page.getByRole('button', { name: /Sesión a borrar/ }).click();
+    const detail = page.getByRole('dialog');
+
+    await detail.getByRole('button', { name: 'Eliminar entrenamiento' }).click();
+    await expect(detail.getByText('Se borra definitivamente')).toBeVisible();
+    await detail.getByRole('button', { name: 'No, volver' }).click();
+    expect(mock.tables.workout_sessions).toHaveLength(1); // cancelar no borra
+
+    await detail.getByRole('button', { name: 'Eliminar entrenamiento' }).click();
+    await detail.getByRole('button', { name: 'Sí, eliminar' }).click();
+    await expect(page.getByText('Sin sesiones registradas')).toBeVisible();
+    expect(mock.tables.workout_sessions).toHaveLength(0);
+    expect(mock.tables.session_results).toHaveLength(0);
+  });
+
+  test('Benja no ve la opción de eliminar', async ({ page }) => {
+    const mock = await mockSupabase(page);
+    seedSession(mock);
+    await loginAs(page, 'player');
+    await page.goto('/entrenar/historial');
+    await page.getByRole('button', { name: /Sesión a borrar/ }).click();
+    const detail = page.getByRole('dialog');
+    await expect(detail.getByRole('button', { name: 'Editar entrenamiento' })).toBeVisible();
+    await expect(detail.getByRole('button', { name: 'Eliminar entrenamiento' })).toHaveCount(0);
+  });
+});

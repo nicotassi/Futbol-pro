@@ -113,6 +113,11 @@ export const enqueueMatch = (userId: string, payload: MatchPayload) =>
 export const enqueueWellness = (userId: string, payload: WellnessPayload) =>
   enqueue(userId, { kind: 'save_wellness', payload, id: payload.client_id });
 
+/** Descarta un registro que todavía no se envió (nunca llegó a la base). */
+export async function discardOutboxItem(id: string) {
+  await save((await load()).filter((i) => i.id !== id));
+}
+
 /** Envía los pendientes del usuario actual, en orden. */
 export function flushOutbox(userId: string): Promise<void> {
   if (flushing) return flushing;

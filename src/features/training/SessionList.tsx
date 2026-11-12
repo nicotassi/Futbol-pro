@@ -1,12 +1,22 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { CheckCircle2, ChevronRight, CircleDashed, CloudOff, Dumbbell, Pencil } from 'lucide-react';
+import {
+  CheckCircle2,
+  ChevronRight,
+  CircleDashed,
+  CloudOff,
+  Dumbbell,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
+import { discardOutboxItem } from '@/services/outbox';
 import { Badge } from '@/components/ui/Badge';
 import { Sheet } from '@/components/ui/Sheet';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { useExercises, type SessionView } from './hooks';
 import {
+  deleteSession,
   fetchSessionResults,
   setResultCompleted,
   trainingKeys,
@@ -28,7 +38,13 @@ import {
 } from '@/features/sessionWatch/watchData';
 import { postStateLabels, relativeDay, rpeLabels } from './format';
 
-export function SessionList({ sessions }: { sessions: SessionView[] }) {
+export function SessionList({
+  sessions,
+  isAdmin = false,
+}: {
+  sessions: SessionView[];
+  isAdmin?: boolean;
+}) {
   const [open, setOpen] = useState<SessionView | null>(null);
   return (
     <>
@@ -65,13 +81,21 @@ export function SessionList({ sessions }: { sessions: SessionView[] }) {
         ))}
       </ul>
       <Sheet open={Boolean(open)} onClose={() => setOpen(null)} title={open?.title ?? ''}>
-        {open && <SessionDetail session={open} />}
+        {open && <SessionDetail session={open} isAdmin={isAdmin} onDeleted={() => setOpen(null)} />}
       </Sheet>
     </>
   );
 }
 
-function SessionDetail({ session: initial }: { session: SessionView }) {
+function SessionDetail({
+  session: initial,
+  isAdmin,
+  onDeleted,
+}: {
+  session: SessionView;
+  isAdmin: boolean;
+  onDeleted: () => void;
+}) {
   const [session, setSession] = useState<SessionView>(initial);
   const [editing, setEditing] = useState(false);
   const exercises = useExercises();
@@ -173,6 +197,66 @@ function SessionDetail({ session: initial }: { session: SessionView }) {
           Editar entrenamiento
         </Button>
       )}
+      {isAdmin && <DeleteSession session={session} onDeleted={onDeleted} />}
+    </div>
+  );
+}
+
+/** Eliminar una sesión (solo papá), con confirmación. Es definitivo. */
+function DeleteSession({ session, onDeleted }: { session: SessionView; onDeleted: () => void }) {
+  const queryClient = useQueryClient();
+  const player = usePlayer();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const remove = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      if (session.pending) await discardOutboxItem(session.id.replace(/^pendiente-/, ''));
+      else await deleteSession(session.id);
+      await queryClient.invalidateQueries({ queryKey: trainingKeys.sessions(player.id) });
+      onDeleted();
+    } catch (e) {
+      setError(friendlyError(e));
+      setBusy(false);
+    }
+  };
+
+  if (!confirming)
+    return (
+      <Button
+        variant="ghost"
+        onClick={() => setConfirming(true)}
+        leadingIcon={<Trash2 className="size-4" />}
+      >
+        {session.pending ? 'Descartar entrenamiento' : 'Eliminar entrenamiento'}
+      </Button>
+    );
+  return (
+    <div
+      role="alertdialog"
+      aria-label="Confirmar eliminación"
+      className="rounded-[14px] border border-danger/40 bg-danger-soft p-3"
+    >
+      <p className="font-medium text-danger">¿Eliminar “{session.title}”?</p>
+      <p className="mt-1 text-xs text-danger">
+        Se borra definitivamente, con sus ejercicios y datos del reloj. No se puede deshacer.
+      </p>
+      {error && (
+        <p role="alert" className="mt-2 text-sm font-medium text-danger">
+          {error}
+        </p>
+      )}
+      <div className="mt-3 flex gap-2">
+        <Button variant="danger" size="sm" disabled={busy} onClick={() => void remove()}>
+          {busy ? 'Eliminando…' : 'Sí, eliminar'}
+        </Button>
+        <Button variant="ghost" size="sm" disabled={busy} onClick={() => setConfirming(false)}>
+          No, volver
+        </Button>
+      </div>
     </div>
   );
 }

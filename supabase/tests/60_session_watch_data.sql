@@ -58,3 +58,19 @@ set role authenticated;
 select tests.ok(tests.affected($$update public.workout_sessions set title = 'Hack' where id = (select v from ids6 where k = 'r')$$) = 0, 'otra familia no puede editar la sesión');
 select tests.ok(tests.affected($$update public.session_results set completed = false where session_id = (select v from ids6 where k = 'r')$$) = 0, 'otra familia no puede cambiar los ejercicios');
 reset role;
+
+-- Eliminar una sesión: solo papá; se van también sus ejercicios
+select tests.login('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+select tests.ok(tests.affected($$delete from public.workout_sessions where id = (select v from ids6 where k = 'r')$$) = 0, 'el jugador no puede eliminar sesiones');
+reset role;
+select tests.login('00000000-0000-0000-0000-00000000000c');
+set role authenticated;
+select tests.ok(tests.affected($$delete from public.workout_sessions where id = (select v from ids6 where k = 'r')$$) = 0, 'otra familia no puede eliminar sesiones ajenas');
+reset role;
+select tests.login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select tests.ok(tests.affected($$delete from public.workout_sessions where id = (select v from ids6 where k = 'r')$$) = 1, 'papá elimina la sesión');
+select tests.ok((select count(*) = 0 from public.workout_sessions where id = (select v from ids6 where k = 'r')), 'la sesión ya no existe');
+select tests.ok((select count(*) = 0 from public.session_results where session_id = (select v from ids6 where k = 'r')), 'sus ejercicios se eliminan con ella');
+reset role;

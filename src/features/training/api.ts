@@ -276,3 +276,11 @@ export async function setResultCompleted(resultId: string, completed: boolean): 
   if (error) throw error;
   if (data.length === 0) throw new Error('No tenés permiso para cambiar este ejercicio.');
 }
+
+/** Elimina definitivamente una sesión y sus resultados (solo papá; la base lo exige). */
+export async function deleteSession(id: string): Promise<void> {
+  const { data, error } = await db().from('workout_sessions').delete().eq('id', id).select('id');
+  if (error) throw error;
+  // Sin permiso (RLS) la base no da error: simplemente no borra ninguna fila.
+  if (data.length === 0) throw new Error('Solo papá puede eliminar entrenamientos.');
+}

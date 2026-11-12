@@ -219,7 +219,7 @@ export default function TrainingPage() {
             />
           </Card>
         ) : (
-          <SessionList sessions={(sessions.data ?? []).slice(0, 3)} />
+          <SessionList sessions={(sessions.data ?? []).slice(0, 3)} isAdmin={isAdmin} />
         )}
       </Section>
 

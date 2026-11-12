@@ -34,7 +34,7 @@ Se descartó la lectura de capturas con IA (requería pagar la API aparte). En s
 
 | Prueba                                                | Resultado |
 | ----------------------------------------------------- | --------- |
-| Base de datos (`npm run db:test`): 191 verificaciones | ✅        |
+| Base de datos (`npm run db:test`): 196 verificaciones | ✅        |
 | Tests unitarios (`npm test`)                          | ✅        |
 | Tests e2e (`npm run test:e2e`), Android y escritorio  | ✅        |
 | Migraciones y función aplicadas en Supabase           | ✅        |
@@ -44,3 +44,4 @@ Se descartó la lectura de capturas con IA (requería pagar la API aparte). En s
 - **Rutinas más libres:** al armar un entrenamiento, papá puede tocar **"Crear ejercicio nuevo"** dentro de la hoja "Agregar ejercicio": nombre, categoría, minutos y pasos. El ejercicio se guarda en la biblioteca y se suma a la rutina al instante. Se puede repetir un ejercicio, reordenar y ajustar series, repeticiones, duración y descanso de cada uno.
 - **Modo oscuro:** en Perfil → Apariencia: _Automático_ (sigue al celular), _Claro_ u _Oscuro_. Se recuerda en el dispositivo y se aplica antes de dibujar la pantalla (sin destello blanco).
 - **Editar entrenamientos ya hechos:** en Historial, al abrir una sesión, el botón **Editar entrenamiento** permite cambiar nombre, día (se conserva la hora), minutos, esfuerzo, cómo terminó, observaciones, qué ejercicios se completaron y los datos del reloj. Lo pueden hacer Benja y papá; se edita la misma sesión (no se duplica) y requiere conexión.
+- **Eliminar entrenamientos:** solo papá. En el detalle de la sesión, **Eliminar entrenamiento** pide confirmación y borra definitivamente la sesión con sus ejercicios y datos del reloj (no se puede deshacer). Benja no ve la opción y la base de datos tampoco se lo permitiría. Un entrenamiento que todavía no se envió (guardado en el celular) se puede **descartar**. Es un borrado real hecho por la app; no pasa por el conector de Supabase.

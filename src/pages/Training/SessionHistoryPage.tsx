@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useAuth } from '@/contexts/authContext';
 import { friendlyError } from '@/services/errors';
 import { useSessions } from '@/features/training/hooks';
 import { SessionList } from '@/features/training/SessionList';
@@ -14,6 +15,7 @@ import { weeklySummary } from '@/features/training/format';
 
 export default function SessionHistoryPage() {
   useDocumentTitle('Historial de entrenamientos');
+  const { isAdmin } = useAuth();
   const sessions = useSessions();
   const week = weeklySummary(sessions.data ?? []);
   return (
@@ -40,7 +42,7 @@ export default function SessionHistoryPage() {
           <EmptyState icon={<Timer className="size-6" />} title="Sin sesiones registradas" />
         </Card>
       ) : (
-        <SessionList sessions={sessions.data!} />
+        <SessionList sessions={sessions.data!} isAdmin={isAdmin} />
       )}
     </>
   );

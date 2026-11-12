@@ -47,7 +47,7 @@ El catálogo visual de componentes está en `/_design`. Solo existe en modo desa
 | `npm run format`    | Prettier                                                                 |
 | `npm test`          | Tests unitarios y de componentes (Vitest)                                |
 | `npm run test:e2e`  | Tests end-to-end en viewport Android (Pixel 7) y escritorio (Playwright) |
-| `npm run db:test`   | Migraciones + 191 pruebas de permisos y reglas (RLS) sobre PostgreSQL    |
+| `npm run db:test`   | Migraciones + 196 pruebas de permisos y reglas (RLS) sobre PostgreSQL    |
 | `npm run db:push`   | Aplica las migraciones al proyecto de Supabase vinculado                 |
 | `npm run family`    | Alta de cuentas y cambio de contraseñas (usa la clave secreta)           |
 

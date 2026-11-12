@@ -199,6 +199,11 @@ export function handleTable(
     return { status: 200, body: target };
   }
 
+  if (method === 'DELETE' && table === 'workout_sessions' && caller.role !== 'admin') {
+    // RLS: solo papá borra sesiones; el jugador no recibe error, pero no se borra nada.
+    return { status: 200, body: [] };
+  }
+
   if (method === 'DELETE') {
     const target = visible.filter((r) => matches(r, params));
     if (
@@ -208,6 +213,10 @@ export function handleTable(
       return { status: 409, body: { code: '23503', message: 'violates foreign key constraint' } };
     }
     tables[table] = rows.filter((r) => !target.includes(r));
+    if (table === 'workout_sessions') {
+      const ids = new Set(target.map((t) => t.id));
+      tables.session_results = tables.session_results!.filter((r) => !ids.has(r.session_id));
+    }
     if (table === 'workout_templates') {
       const ids = new Set(target.map((t) => t.id));
       tables.workout_items = tables.workout_items!.filter((i) => !ids.has(i.template_id));
