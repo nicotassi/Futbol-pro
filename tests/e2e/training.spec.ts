@@ -187,6 +187,26 @@ test('Benja hace un entrenamiento completo, lo retoma tras cerrar y lo registra'
   await expect(page.getByText('Descanso', { exact: true })).toBeVisible();
 
   // Se cierra la app en pleno descanso: al volver, retoma donde quedó.
+  // (esperamos a que el celular termine de guardar el estado antes de simular el cierre)
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<boolean>((resolve) => {
+            const open = indexedDB.open('keyval-store');
+            open.onsuccess = () => {
+              const get = open.result
+                .transaction('keyval')
+                .objectStore('keyval')
+                .get('fp-active-session');
+              get.onsuccess = () => resolve(Boolean(get.result?.restEndsAt));
+              get.onerror = () => resolve(false);
+            };
+            open.onerror = () => resolve(false);
+          }),
+      ),
+    )
+    .toBe(true);
   await page.goto('/');
   await nav(page, 'Entrenar');
   await expect(page.getByText('Entrenamiento sin terminar')).toBeVisible();
