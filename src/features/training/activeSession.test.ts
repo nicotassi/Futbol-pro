@@ -119,3 +119,39 @@ describe('sesión activa', () => {
     ]);
   });
 });
+
+describe('módulos y vueltas', () => {
+  const step = (o: Record<string, unknown>) =>
+    ({
+      workoutItemId: 'i1',
+      exerciseId: 'e1',
+      name: 'X',
+      setsDone: 0,
+      completed: false,
+      ...o,
+    }) as never;
+
+  it('un resultado por ejercicio: completo solo si se hizo en todas las vueltas', async () => {
+    const { aggregateResults } = await import('./activeSession');
+    const r = aggregateResults([
+      step({ workoutItemId: 'a', completed: true, setsDone: 1 }),
+      step({ workoutItemId: 'b', completed: true, setsDone: 1 }),
+      step({ workoutItemId: 'a', completed: false, setsDone: 0 }),
+      step({ workoutItemId: 'b', completed: true, setsDone: 2 }),
+    ]);
+    expect(r).toHaveLength(2);
+    expect(r[0]).toMatchObject({ workout_item_id: 'a', completed: false, sets_done: 1 });
+    expect(r[1]).toMatchObject({ workout_item_id: 'b', completed: true, sets_done: 3 });
+  });
+
+  it('describe en qué módulo y vuelta va (solo si hace falta)', async () => {
+    const { stepContext, countBlocks } = await import('./activeSession');
+    const a = step({ blockName: 'Técnica', blockIndex: 0, round: 2, rounds: 3 });
+    const b = step({ blockName: 'Módulo 2', blockIndex: 1, round: 1, rounds: 1 });
+    expect(stepContext(a, 2)).toBe('Técnica · vuelta 2 de 3');
+    expect(stepContext(b, 2)).toBe('Módulo 2');
+    expect(stepContext(a, 1)).toBe('vuelta 2 de 3');
+    expect(stepContext(step({}), 1)).toBe('');
+    expect(countBlocks([a, b])).toBe(2);
+  });
+});

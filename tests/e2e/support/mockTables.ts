@@ -275,6 +275,9 @@ export function handleRpc(
         duration_sec: num(it.duration_sec),
         rest_sec: num(it.rest_sec),
         instructions: blank(it.instructions),
+        block: num(it.block) ?? 0,
+        block_repeats: num(it.block_repeats) ?? 1,
+        block_name: blank(it.block_name),
         removed: false,
       }),
     );

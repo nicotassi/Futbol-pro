@@ -44,7 +44,7 @@ function seedWorkout(mock: Mock, extra: Record<string, unknown> = {}) {
       sets: 2,
       reps: null,
       duration_sec: 30,
-      rest_sec: 30,
+      rest_sec: 600,
       instructions: null,
       removed: false,
     },
@@ -126,12 +126,16 @@ test('papá arma un entrenamiento, lo reordena, lo duplica y lo elimina', async 
   await page.getByRole('button', { name: 'Guardar entrenamiento' }).click();
   await expect(page.getByRole('alert')).toContainText('Agregá al menos un ejercicio.');
 
-  await page.getByLabel('Nombre').fill('Coordinación + técnica');
+  await page.getByLabel('Nombre', { exact: true }).fill('Coordinación + técnica');
   for (const name of ['Escalera de coordinación', 'Dominio de pelota']) {
-    await page.getByRole('button', { name: 'Agregar', exact: true }).click();
+    await page.getByRole('button', { name: /^Agregar ejercicio a/ }).click();
     await page.getByRole('button', { name: `Agregar ${name}` }).click();
   }
-  await page.getByRole('button', { name: 'Subir' }).nth(1).click(); // Dominio primero
+  await page.getByRole('button', { name: 'Subir Dominio de pelota' }).click(); // Dominio primero
+  await page
+    .getByRole('button', { name: /Más opciones/ })
+    .first()
+    .click();
   await page.getByLabel('Series').first().fill('2');
   await page.getByRole('button', { name: 'Guardar entrenamiento' }).click();
 
@@ -148,7 +152,9 @@ test('papá arma un entrenamiento, lo reordena, lo duplica y lo elimina', async 
 
   await page.getByRole('button', { name: /Coordinación \+ técnica/ }).click();
   await page.getByRole('button', { name: 'Duplicar' }).click();
-  await expect(page.getByLabel('Nombre')).toHaveValue('Coordinación + técnica (copia)');
+  await expect(page.getByLabel('Nombre', { exact: true })).toHaveValue(
+    'Coordinación + técnica (copia)',
+  );
   await page.getByRole('button', { name: 'Guardar entrenamiento' }).click();
   await expect(page.getByRole('button', { name: /\(copia\)/ })).toBeVisible();
 

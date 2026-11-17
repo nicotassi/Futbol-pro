@@ -135,6 +135,10 @@ export interface WorkoutItemDraft {
   duration_sec: number | null;
   rest_sec: number | null;
   instructions: string;
+  /** Módulo al que pertenece (0, 1, 2…), cuántas veces se repite y su nombre. */
+  block?: number;
+  block_repeats?: number;
+  block_name?: string | null;
 }
 
 /** Guarda en una sola operación atómica (función save_workout en la base). */
@@ -157,6 +161,9 @@ export async function saveWorkout(playerId: string, draft: WorkoutDraft): Promis
       duration_sec: i.duration_sec ?? '',
       rest_sec: i.rest_sec ?? '',
       instructions: i.instructions,
+      block: i.block ?? 0,
+      block_repeats: i.block_repeats ?? 1,
+      block_name: i.block_name ?? '',
     })),
   });
   if (error) throw error;

@@ -48,3 +48,42 @@ describe('validateWorkout', () => {
     ]);
   });
 });
+
+describe('módulos en el cálculo de tiempo', () => {
+  it('multiplica por las vueltas de cada módulo', () => {
+    const items = [
+      {
+        exercise_id: 'a',
+        sets: null,
+        reps: null,
+        duration_sec: 60,
+        rest_sec: null,
+        instructions: '',
+        block: 0,
+        block_repeats: 3,
+      },
+      {
+        exercise_id: 'b',
+        sets: null,
+        reps: null,
+        duration_sec: 120,
+        rest_sec: null,
+        instructions: '',
+        block: 0,
+        block_repeats: 3,
+      },
+      {
+        exercise_id: 'c',
+        sets: null,
+        reps: null,
+        duration_sec: 60,
+        rest_sec: null,
+        instructions: '',
+        block: 1,
+        block_repeats: 1,
+      },
+    ];
+    // (1 + 2) min × 3 vueltas + 1 min = 10 min
+    expect(estimateMinutes(items, new Map())).toBe(10);
+  });
+});

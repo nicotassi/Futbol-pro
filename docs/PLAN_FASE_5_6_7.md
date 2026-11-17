@@ -1,6 +1,6 @@
 # FASES 5, 6 y 7 — Reloj con IA, evolución y cierre
 
-> Estado: **implementadas y publicadas**. Migraciones `1100`, `1200` y `1300` aplicadas en Supabase.
+> Estado: **implementadas y publicadas**. Migraciones `1100`, `1200`, `1300` y `1400` aplicadas en Supabase.
 
 ## Fase 5 — Datos del reloj (carga manual)
 
@@ -34,7 +34,7 @@ Se descartó la lectura de capturas con IA (requería pagar la API aparte). En s
 
 | Prueba                                                | Resultado |
 | ----------------------------------------------------- | --------- |
-| Base de datos (`npm run db:test`): 196 verificaciones | ✅        |
+| Base de datos (`npm run db:test`): 206 verificaciones | ✅        |
 | Tests unitarios (`npm test`)                          | ✅        |
 | Tests e2e (`npm run test:e2e`), Android y escritorio  | ✅        |
 | Migraciones y función aplicadas en Supabase           | ✅        |
@@ -45,3 +45,5 @@ Se descartó la lectura de capturas con IA (requería pagar la API aparte). En s
 - **Modo oscuro:** en Perfil → Apariencia: _Automático_ (sigue al celular), _Claro_ u _Oscuro_. Se recuerda en el dispositivo y se aplica antes de dibujar la pantalla (sin destello blanco).
 - **Editar entrenamientos ya hechos:** en Historial, al abrir una sesión, el botón **Editar entrenamiento** permite cambiar nombre, día (se conserva la hora), minutos, esfuerzo, cómo terminó, observaciones, qué ejercicios se completaron y los datos del reloj. Lo pueden hacer Benja y papá; se edita la misma sesión (no se duplica) y requiere conexión.
 - **Eliminar entrenamientos:** solo papá. En el detalle de la sesión, **Eliminar entrenamiento** pide confirmación y borra definitivamente la sesión con sus ejercicios y datos del reloj (no se puede deshacer). Benja no ve la opción y la base de datos tampoco se lo permitiría. Un entrenamiento que todavía no se envió (guardado en el celular) se puede **descartar**. Es un borrado real hecho por la app; no pasa por el conector de Supabase.
+- **Entrenamientos por módulos:** al armar un entrenamiento, papá crea **módulos**: cada uno agrupa varios ejercicios y tiene un **"Se repite N veces"** (botones − / +, de 1 a 50) y un nombre opcional. Se pueden agregar tantos módulos como se quiera; se hacen uno detrás del otro. Cada ejercicio muestra solo _Tiempo_ y _Repeticiones_; series, descanso e indicaciones están en "Más opciones". Editar es directo: cambiar las vueltas, subir/bajar ejercicios o módulos, **duplicar** un módulo, quitar ejercicios o módulos (el módulo pide confirmación). El tiempo sugerido multiplica por las vueltas. Los entrenamientos anteriores quedan como un único módulo de una vuelta.
+- **Modo entrenamiento con módulos:** se recorre el módulo completo (ejercicio → _Ejercicio siguiente_ → …) tantas vueltas como indique y luego sigue el módulo siguiente. Arriba se ve "Técnica · vuelta 2 de 3". En el historial queda un resultado por ejercicio (completado solo si se hizo en todas las vueltas).

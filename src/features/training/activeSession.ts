@@ -1,6 +1,7 @@
 import { del, get, set } from 'idb-keyval';
 import type { WatchData } from '@/features/sessionWatch/watchData';
 import type { Exercise, SessionPayload, WorkoutWithItems } from './api';
+import { expandSteps } from './blocks';
 
 /**
  * Sesión de entrenamiento en curso.
@@ -20,6 +21,11 @@ export interface ActiveItem {
   instructions: string | null;
   setsDone: number;
   completed: boolean;
+  /** Módulo y vuelta (entrenamientos con módulos). Sin datos = un solo módulo, una vuelta. */
+  blockName?: string;
+  round?: number;
+  rounds?: number;
+  blockIndex?: number;
 }
 
 export interface ActiveSession {
@@ -76,9 +82,13 @@ export function createActiveSession(
     startedAt: (ids.now ?? new Date()).toISOString(),
     index: 0,
     restEndsAt: null,
-    items: workout.items.map((it) => {
+    items: expandSteps(workout.items).map(({ item: it, blockName, round, rounds, blockIndex }) => {
       const ex = byId.get(it.exercise_id);
       return {
+        blockName,
+        round,
+        rounds,
+        blockIndex,
         workoutItemId: it.id,
         exerciseId: it.exercise_id,
         name: ex?.name ?? 'Ejercicio',
@@ -170,12 +180,44 @@ export function buildSessionPayload(
       client_id: session.clientId,
       ...form.watch,
     },
-    results: session.items.map((it) => ({
-      workout_item_id: it.workoutItemId,
-      exercise_id: it.exerciseId,
-      completed: it.completed,
-      sets_done: it.setsDone || null,
-      reps_done: it.reps,
-    })),
+    results: aggregateResults(session.items),
   };
 }
+
+/**
+ * Un resultado por ejercicio del entrenamiento: si un módulo se repite, el ejercicio
+ * cuenta como completado solo si se hizo en todas las vueltas, y las series se suman.
+ */
+export function aggregateResults(items: ActiveItem[]): SessionPayload['results'] {
+  const out = new Map<string, SessionPayload['results'][number]>();
+  const order: string[] = [];
+  items.forEach((it, i) => {
+    const key = it.workoutItemId ?? `libre-${i}`;
+    const prev = out.get(key);
+    if (!prev) {
+      order.push(key);
+      out.set(key, {
+        workout_item_id: it.workoutItemId,
+        exercise_id: it.exerciseId,
+        completed: it.completed,
+        sets_done: it.setsDone || null,
+        reps_done: it.reps,
+      });
+    } else {
+      prev.completed = prev.completed && it.completed;
+      prev.sets_done = (prev.sets_done ?? 0) + it.setsDone || null;
+    }
+  });
+  return order.map((k) => out.get(k)!);
+}
+
+/** Texto corto de dónde está: "Módulo 1 · vuelta 2 de 3" (vacío si no hay módulos ni vueltas). */
+export function stepContext(item: ActiveItem, totalBlocks: number): string {
+  const parts: string[] = [];
+  if (totalBlocks > 1 && item.blockName) parts.push(item.blockName);
+  if ((item.rounds ?? 1) > 1) parts.push(`vuelta ${item.round} de ${item.rounds}`);
+  return parts.join(' · ');
+}
+
+export const countBlocks = (items: ActiveItem[]) =>
+  new Set(items.map((i) => i.blockIndex ?? 0)).size;

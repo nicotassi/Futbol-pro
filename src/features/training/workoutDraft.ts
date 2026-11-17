@@ -5,7 +5,7 @@ import type { Exercise, WorkoutDraft, WorkoutItemDraft } from './api';
  * - con duración y series: duración por serie × series;
  * - con duración sola: esa duración;
  * - sin duración: la duración estimada del ejercicio en la biblioteca;
- * más los descansos entre series.
+ * más los descansos entre series, todo multiplicado por las vueltas de su módulo.
  */
 export function estimateMinutes(
   items: WorkoutItemDraft[],
@@ -17,7 +17,7 @@ export function estimateMinutes(
       ? it.duration_sec * sets
       : (exercises.get(it.exercise_id)?.est_minutes ?? 0) * 60;
     const rest = (it.rest_sec ?? 0) * (sets - 1);
-    return total + work + rest;
+    return total + (work + rest) * (it.block_repeats ?? 1);
   }, 0);
   return Math.round(seconds / 60);
 }
@@ -42,6 +42,8 @@ export function validateWorkout(draft: WorkoutDraft): string[] {
       errors.push(`Ejercicio ${n}: la duración no es válida.`);
     if (!inRange(it.rest_sec, 0, 3600))
       errors.push(`Ejercicio ${n}: el descanso va de 0 a 3600 segundos.`);
+    if (!inRange(it.block_repeats ?? 1, 1, 50))
+      errors.push(`Ejercicio ${n}: el módulo se repite de 1 a 50 veces.`);
   });
   return errors;
 }

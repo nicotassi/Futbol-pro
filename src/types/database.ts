@@ -144,6 +144,9 @@ export type Database = {
           duration_sec: number | null;
           rest_sec: number | null;
           instructions: string | null;
+          block: number;
+          block_repeats: number;
+          block_name: string | null;
           removed: boolean;
         };
         Insert: never;

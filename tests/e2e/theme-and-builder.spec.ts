@@ -44,7 +44,7 @@ test('papá crea un ejercicio nuevo desde el armado de la rutina y lo usa al ins
   await loginAs(page, 'admin');
   await page.goto('/entrenar/nuevo');
   await page.getByLabel('Nombre', { exact: true }).fill('Rutina a mi gusto');
-  await page.getByRole('button', { name: 'Agregar', exact: true }).click();
+  await page.getByRole('button', { name: /^Agregar ejercicio a/ }).click();
 
   await page.getByRole('button', { name: 'Crear ejercicio nuevo' }).click();
   const sheet = page.getByRole('dialog', { name: 'Ejercicio nuevo' });

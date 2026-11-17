@@ -44,6 +44,8 @@ import {
   targetSets,
   toggleCompleted,
   type ActiveSession,
+  countBlocks,
+  stepContext,
 } from '@/features/training/activeSession';
 import { ScalePicker } from '@/features/training/ScalePicker';
 import { postStateLabels, rpeLabels } from '@/features/training/format';
@@ -178,6 +180,7 @@ function ActiveView({
   }, [timeUp, watch.running]);
 
   const total = targetSets(item);
+  const context = stepContext(item, countBlocks(session.items));
   const completedCount = session.items.filter((i) => i.completed).length;
 
   return (
@@ -239,6 +242,11 @@ function ActiveView({
             </span>
           ) : null}
         </div>
+        {context && (
+          <p className="mt-4 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold">
+            {context}
+          </p>
+        )}
         <h1 className="mt-3 text-3xl leading-tight font-semibold">{item.name}</h1>
         {item.objective && <p className="mt-2 max-w-sm text-sm text-fog">{item.objective}</p>}
         {item.instructions && (
@@ -462,7 +470,14 @@ function FinishSheet({
                     onChange={() => update(toggleCompleted(session, i))}
                     className="size-5 accent-[var(--color-gold-strong)]"
                   />
-                  <span className="flex-1 text-sm">{it.name}</span>
+                  <span className="flex-1 text-sm">
+                    {it.name}
+                    {stepContext(it, countBlocks(session.items)) && (
+                      <span className="block text-xs text-muted">
+                        {stepContext(it, countBlocks(session.items))}
+                      </span>
+                    )}
+                  </span>
                 </label>
               </li>
             ))}
